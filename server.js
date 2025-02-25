@@ -16,10 +16,10 @@ const PORT = process.env.PORT || 5000;
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*", // Allow frontend to connect
+    origin: "*",
   },
 });
-app.set("io", io); // Store io in app
+app.set("io", io);
 app.use(express.json());
 app.use(cors());
 app.use(cookieParser());
@@ -30,7 +30,7 @@ app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/posts", require("./routes/postRoutes"));
 app.use("/api/resources", require("./routes/resourceRoutes"));
-app.use("/api/profile", require("./routes/profile"));
+app.use("/api/profile", require("./routes/profileRoutes"));
 app.use("/api/search", require("./routes/search"));
 app.use("/api/messages", require("./routes/messages"));
 app.use("/api/notifications", require("./routes/notifications"));
@@ -83,11 +83,12 @@ server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
 
-
 app.use((err, req, res, next) => {
   console.error("Error:", err);
   if (res.headersSent) {
     return next(err);
   }
-  res.status(500).json({ message: "Internal Server Error", error: err.message });
+  res
+    .status(500)
+    .json({ message: "Internal Server Error", error: err.message });
 });

@@ -4,6 +4,7 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+import { useState, useEffect } from "react";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -13,17 +14,36 @@ import Feed from "./pages/Feed";
 import Resources from "./pages/Resources";
 
 function App() {
-  const isAuthenticated = !!localStorage.getItem("token");
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    !!localStorage.getItem("token")
+  );
+
+  useEffect(() => {
+    const handleAuthChange = () => {
+      setIsAuthenticated(!!localStorage.getItem("token"));
+    };
+
+    window.addEventListener("storage", handleAuthChange);
+
+    return () => {
+      window.removeEventListener("storage", handleAuthChange);
+    };
+  }, []);
+
   return (
     <Router>
-      {isAuthenticated && <Navbar/>}
+      {isAuthenticated && <Navbar setAuth={setIsAuthenticated} />}
+
       <Routes>
         <Route
           path="/"
           element={isAuthenticated ? <Home /> : <Navigate to="/login" />}
         />
-        <Route path="/login" element={<Login />} />
-        <Route path="/regsiter" element={<Register />} />
+        <Route path="/login" element={<Login setAuth={setIsAuthenticated} />} />
+        <Route
+          path="/register"
+          element={<Register setAuth={setIsAuthenticated} />}
+        />
         <Route
           path="/profile/:id"
           element={isAuthenticated ? <Profile /> : <Navigate to="/login" />}

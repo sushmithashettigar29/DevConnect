@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import PropTypes from "prop-types";
 import {
   Container,
   TextField,
@@ -10,7 +11,7 @@ import {
   Paper,
 } from "@mui/material";
 
-function Login() {
+const Login = ({ setAuth }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
@@ -25,7 +26,9 @@ function Login() {
       );
 
       localStorage.setItem("token", res.data.token);
+      localStorage.setItem("userId", res.data.userId); 
       console.log("Login Successful");
+      setAuth(true);
       navigate("/");
     } catch (err) {
       console.error("Error:", err.response?.data?.message || "Login failed");
@@ -74,6 +77,10 @@ function Login() {
       </Paper>
     </Container>
   );
-}
+};
+
+Login.propTypes = {
+  setAuth: PropTypes.func.isRequired,
+};
 
 export default Login;

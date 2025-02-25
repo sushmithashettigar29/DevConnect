@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import PropTypes from "prop-types";
 import axios from "axios";
 import { TextField, Button, Container, Typography, Box } from "@mui/material";
 
-function Register() {
+const Register = ({ setAuth }) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -13,12 +14,13 @@ function Register() {
     e.preventDefault();
     try {
       const res = await axios.post(
-        "http://localhost/api/auth/register",
+        "http://localhost:5000/api/auth/register",
         { name, email, password },
         { headers: { "Content-Type": "application/json" } }
       );
 
       alert(res.data.message);
+      setAuth(true);
       navigate("/login");
     } catch (err) {
       alert(err.response?.data?.message || "Registration failed");
@@ -72,6 +74,9 @@ function Register() {
       </Typography>
     </Container>
   );
-}
+};
 
+Register.propTypes = {
+  setAuth: PropTypes.func.isRequired,
+};
 export default Register;

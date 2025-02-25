@@ -1,10 +1,14 @@
 import { useNavigate } from "react-router-dom";
+import PropTypes from "prop-types";
 import { AppBar, Toolbar, Typography, Button, Box } from "@mui/material";
 
-function Navbar() {
+const Navbar = ({ setAuth }) => {
   const navigate = useNavigate();
+  const userId = localStorage.getItem("userId");
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    setAuth(false);
     navigate("/login");
   };
   return (
@@ -28,7 +32,10 @@ function Navbar() {
           <Button color="inherit" onClick={() => navigate("/resources")}>
             Resources
           </Button>
-          <Button color="inherit" onClick={() => navigate("/profile")}>
+          <Button
+            color="inherit"
+            onClick={() => navigate(`/profile/${userId}`)}
+          >
             Profile
           </Button>
         </Box>
@@ -39,6 +46,9 @@ function Navbar() {
       </Toolbar>
     </AppBar>
   );
-}
+};
 
+Navbar.propTypes = {
+  setAuth: PropTypes.func.isRequired,
+};
 export default Navbar;
