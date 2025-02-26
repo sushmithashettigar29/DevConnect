@@ -46,10 +46,15 @@ const Profile = () => {
       >
         <Stack alignItems="center" spacing={2}>
           <Avatar
-            src={user?.profilePicture}
+            src={
+              user?.profilePicture
+                ? `http://localhost:5000${user.profilePicture}`
+                : ""
+            }
             alt={user?.name}
             sx={{ width: 100, height: 100 }}
           />
+
           <Typography variant="h4">{user?.name}</Typography>
           <Typography variant="body1">
             Followers: {user?.followers?.length || 0} | Following:{" "}

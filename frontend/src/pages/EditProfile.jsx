@@ -42,32 +42,41 @@ const EditProfile = () => {
     setUserData({ ...userData, [e.target.name]: e.target.value });
   };
 
-  const handleFileChange = (e) => {
-    setProfilePictureFile(e.target.files[0]); // Store the file
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfilePictureFile(file); // Update state with the selected file
+      await uploadProfilePicture(file); // Automatically upload the file
+    }
   };
 
-  const uploadProfilePicture = async () => {
-    if (!profilePictureFile) {
+  const uploadProfilePicture = async (file) => {
+    if (!file) {
       console.log("No file selected");
       return;
     }
 
     try {
       const formData = new FormData();
-      formData.append("profilePicture", profilePictureFile);
+      formData.append("profilePicture", file);
 
+      const token = localStorage.getItem("token"); // Retrieve token from localStorage
       const res = await axios.post(
         "http://localhost:5000/api/profile/upload-profile-picture",
         formData,
         {
-          headers: { "Content-Type": "multipart/form-data" },
-          withCredentials: true, // Ensure user authentication is included
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`, // Send token in headers
+          },
+          withCredentials: true, // Ensure cookies are sent
         }
       );
+
       console.log("Upload success:", res.data);
-      setUserData({ ...userData, profilePicture: res.data.profilePicture }); // Update profile picture URL
+      setUserData({ ...userData, profilePicture: res.data.profilePicture });
     } catch (error) {
-      console.log("Error uploading profile picture", error);
+      console.log("Error uploading profile picture:", error);
     }
   };
 
@@ -75,8 +84,35 @@ const EditProfile = () => {
     e.preventDefault();
 
     try {
+      if (profilePictureFile) {
+        const formData = new FormData();
+        formData.append("profilePicture", profilePictureFile);
+
+        const token = localStorage.getItem("token"); // Retrieve token from localStorage
+        const uploadRes = await axios.post(
+          "http://localhost:5000/api/profile/upload-profile-picture",
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${token}`, // Send token in headers
+            },
+            withCredentials: true,
+          }
+        );
+        setUserData({
+          ...userData,
+          profilePicture: uploadRes.data.profilePicture,
+        });
+      }
+
+      const token = localStorage.getItem("token"); // Retrieve token from localStorage
       await axios.put(`http://localhost:5000/api/profile/${id}`, userData, {
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // Send token in headers
+        },
+        withCredentials: true,
       });
 
       navigate(`/profile/${id}`);
@@ -155,14 +191,6 @@ const EditProfile = () => {
             onChange={handleFileChange}
             style={{ display: "block", marginTop: "10px" }}
           />
-          <Button
-            variant="outlined"
-            color="primary"
-            onClick={uploadProfilePicture}
-            sx={{ marginTop: 1 }}
-          >
-            Upload Profile Picture
-          </Button>
 
           <TextField
             label="LinkedIn"

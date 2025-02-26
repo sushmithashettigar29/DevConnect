@@ -21,7 +21,12 @@ const io = new Server(server, {
 });
 app.set("io", io);
 app.use(express.json());
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173", // Allow requests from this origin
+    credentials: true, // Allow cookies and credentials
+  })
+);
 app.use(cookieParser());
 app.use("/uploads", express.static("uploads"));
 

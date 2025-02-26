@@ -38,11 +38,12 @@ router.post("/login", async (req, res) => {
     if (!isPasswordValid)
       return res.status(400).json({ message: "Invalid password" });
 
+    // Generate token with userId in the payload
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
 
-    res.json({ message: "Login sussessful", token, userId: user._id });
+    res.json({ message: "Login successful", token, userId: user._id });
   } catch (error) {
     res.status(500).json({ message: "Error logging in", error: error.message });
   }

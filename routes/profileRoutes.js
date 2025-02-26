@@ -83,29 +83,34 @@ router.put("/:id", async (req, res) => {
 // Upload Profile Picture
 router.post(
   "/upload-profile-picture",
-  authenticate,
-  upload.single("profilePicture"),
+  authenticate, // Verify authentication
+  upload.single("profilePicture"), // Handle file upload
   async (req, res) => {
     try {
       console.log("Received file:", req.file); // Debugging
-      console.log("User ID:", req.userId); // Debugging
+      console.log("User ID from authentication:", req.userId); // Debugging
 
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
       }
-      const user = await User.findById(req.userId);
+
+      const user = await User.findById(req.userId); // Find user by ID
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
 
+      // Update profile picture URL
       user.profilePicture = `/uploads/${req.file.filename}`;
       await user.save();
+
+      console.log("Profile picture updated for user:", user); // Debugging
 
       res.json({
         message: "Profile picture uploaded successfully",
         profilePicture: user.profilePicture,
       });
     } catch (error) {
+      console.log("Error uploading profile picture:", error); // Debugging
       res.status(500).json({
         message: "Error uploading profile picture",
         error: error.message,
@@ -113,4 +118,5 @@ router.post(
     }
   }
 );
+
 module.exports = router;
