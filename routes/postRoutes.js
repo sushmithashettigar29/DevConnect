@@ -45,7 +45,7 @@ router.post("/create", upload.single("image"), async (req, res) => {
 router.get("/all", async (req, res) => {
   try {
     const posts = await Post.find()
-      .populate("user", "name email")
+      .populate("user", "name email profilePicture bio linkedin github")
       .populate("comments.user", "name email")
       .sort({ createdAt: -1 });
 
@@ -124,10 +124,11 @@ router.post("/comment", async (req, res) => {
 });
 
 // Edit Post
-router.put("/edit/:postId", async (req, res) => {
+router.put("/edit/:postId", upload.single("image"), async (req, res) => {
   try {
     const { postId } = req.params;
-    const { userId, content, image } = req.body;
+    const { userId, content } = req.body;
+    const image = req.file ? `/uploads/${req.file.filename}` : null;
 
     const post = await Post.findById(postId);
     if (!post) return res.status(404).json({ message: "Post not found" });
@@ -135,11 +136,11 @@ router.put("/edit/:postId", async (req, res) => {
     if (post.user.toString() !== userId) {
       return res
         .status(403)
-        .json({ message: "You can only edit tour own post" });
+        .json({ message: "You can only edit your own post" });
     }
 
     if (content) post.content = content;
-    if (image) post.image = image;
+    if (image) post.image = image; // Update image if uploaded
 
     await post.save();
     res.json({ message: "Post updated successfully", post });

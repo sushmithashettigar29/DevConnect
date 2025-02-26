@@ -58,14 +58,19 @@ io.on("connection", (socket) => {
         receiver,
         isRead: false,
       });
-
       const receiverSocketId = onlineUsers.get(receiver);
+
       if (receiverSocketId) {
         io.to(receiverSocketId).emit("receive-message", message);
         io.to(receiverSocketId).emit("update-unread-count", { unreadCount });
       }
+
+      io.to(socket.id).emit("message-sent", { success: true, message });
     } catch (error) {
-      console.log("Error sending message", error.message);
+      io.to(socket.id).emit("message-sent", {
+        success: false,
+        error: error.message,
+      });
     }
   });
 

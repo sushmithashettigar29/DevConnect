@@ -12,6 +12,7 @@ import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import Feed from "./pages/Feed";
 import Resources from "./pages/Resources";
+import EditProfile from "./pages/EditProfile";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
@@ -47,6 +48,10 @@ function App() {
         <Route
           path="/profile/:id"
           element={isAuthenticated ? <Profile /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/edit-profile/:id"
+          element={isAuthenticated ? <EditProfile /> : <Navigate to="/login" />}
         />
         <Route
           path="/feed"
