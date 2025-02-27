@@ -114,12 +114,32 @@ router.post("/comment", async (req, res) => {
         type: "comment",
         post: postId,
       });
+      await notification.save();
     }
     res.status(201).json({ message: "Comment added successfully", post });
   } catch (error) {
     res
       .status(500)
       .json({ message: "Error adding comment", error: error.message });
+  }
+});
+
+router.get("/comments/:postId", async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const post = await Post.findById(postId).populate(
+      "comments.user",
+      "name profilePicture"
+    );
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    res.json(post.comments);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error fetching comments", error: error.message });
   }
 });
 

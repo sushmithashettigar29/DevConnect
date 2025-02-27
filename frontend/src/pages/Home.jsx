@@ -7,6 +7,10 @@ import {
   Avatar,
   Button,
   Grid,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import CommentIcon from "@mui/icons-material/Comment";
@@ -14,20 +18,22 @@ import CommentIcon from "@mui/icons-material/Comment";
 function Home() {
   const [posts, setPosts] = useState([]);
   const [following, setFollowing] = useState(new Set());
+  const [comments, setComments] = useState([]);
+  const [isCommentsPopupOpen, setIsCommentsPopupOpen] = useState(false);
 
-  // Fetch posts from the API
+  const userId = localStorage.getItem("userId");
+
   useEffect(() => {
     const fetchPosts = async () => {
       try {
         const res = await axios.get("http://localhost:5000/api/posts/all");
         console.log("Fetched posts:", res.data);
 
-        // Check if the response is an array
         if (Array.isArray(res.data)) {
-          setPosts(res.data); // Set posts directly from res.data
+          setPosts(res.data);
         } else {
           console.error("Expected an array of posts, but got:", res.data);
-          setPosts([]); // Set posts to an empty array if the response is invalid
+          setPosts([]);
         }
       } catch (error) {
         console.error("Error fetching posts", error);
@@ -36,7 +42,30 @@ function Home() {
     fetchPosts();
   }, []);
 
-  // Handle follow action
+  const handleLike = async (postId) => {
+    try {
+      const res = await axios.post("http://localhost:5000/api/posts/like", {
+        userId,
+        postId,
+      });
+
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post._id === postId
+            ? {
+                ...post,
+                likes: res.data.liked
+                  ? [...post.likes, userId]
+                  : post.likes.filter((id) => id !== userId),
+              }
+            : post
+        )
+      );
+    } catch (error) {
+      console.error("Error liking post", error);
+    }
+  };
+
   const handleFollow = async (userId) => {
     try {
       await axios.post(`http://localhost:5000/api/user/follow/${userId}`);
@@ -46,7 +75,6 @@ function Home() {
     }
   };
 
-  // Handle unfollow action
   const handleUnfollow = async (userId) => {
     try {
       await axios.post(`http://localhost:5000/api/user/unfollow/${userId}`);
@@ -60,6 +88,17 @@ function Home() {
     }
   };
 
+  const handleCommentClick = async (postId) => {
+    try {
+      const res = await axios.get(
+        `http://localhost:5000/api/posts/comments/${postId}`
+      );
+      setComments(res.data);
+      setIsCommentsPopupOpen(true);
+    } catch (error) {
+      console.error("Error fetching comments", error);
+    }
+  };
   return (
     <Grid container spacing={2} justifyContent="center">
       {posts.length > 0 ? (
@@ -88,25 +127,27 @@ function Home() {
                       </Grid>
                     </Grid>
                   </Grid>
-                  <Grid item>
-                    {following.has(post.user._id) ? (
-                      <Button
-                        variant="outlined"
-                        color="primary"
-                        onClick={() => handleUnfollow(post.user._id)}
-                      >
-                        Following
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() => handleFollow(post.user._id)}
-                      >
-                        Follow
-                      </Button>
-                    )}
-                  </Grid>
+                  {post.user._id !== userId && ( // Hide follow button for current user's posts
+                    <Grid item>
+                      {following.has(post.user._id) ? (
+                        <Button
+                          variant="outlined"
+                          color="primary"
+                          onClick={() => handleUnfollow(post.user._id)}
+                        >
+                          Following
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={() => handleFollow(post.user._id)}
+                        >
+                          Follow
+                        </Button>
+                      )}
+                    </Grid>
+                  )}
                 </Grid>
 
                 {/* Post Content */}
@@ -122,19 +163,26 @@ function Home() {
                       src={post.image}
                       alt="Post"
                       style={{ width: "100%", marginTop: 10, borderRadius: 8 }}
-                      onError={(e) => e.target.remove()} // Completely removes broken images
+                      onError={(e) => e.target.remove()}
                     />
                   )}
 
-                {/* Like and Comment Buttons */}
                 <Grid container spacing={1} sx={{ marginTop: 1 }}>
                   <Grid item>
-                    <Button startIcon={<FavoriteIcon />} color="primary">
-                      Like
+                    <Button
+                      startIcon={<FavoriteIcon />}
+                      color="primary"
+                      onClick={() => handleLike(post._id)}
+                    >
+                      {post.likes.includes(userId) ? "Unlike" : "Like"}
                     </Button>
                   </Grid>
                   <Grid item>
-                    <Button startIcon={<CommentIcon />} color="secondary">
+                    <Button
+                      startIcon={<CommentIcon />}
+                      color="secondary"
+                      onClick={() => handleCommentClick(post._id)}
+                    >
                       Comment
                     </Button>
                   </Grid>
@@ -148,6 +196,33 @@ function Home() {
           No posts available.
         </Typography>
       )}
+
+      {/* Comments Popup */}
+      <Dialog
+        open={isCommentsPopupOpen}
+        onClose={() => setIsCommentsPopupOpen(false)}
+      >
+        <DialogTitle>Comments</DialogTitle>
+        <DialogContent>
+          {comments.length > 0 ? (
+            comments.map((comment) => (
+              <div key={comment._id} style={{ marginTop: "10px" }}>
+                <Avatar
+                  src={comment.user.profilePicture}
+                  alt={comment.user.name}
+                />
+                <Typography variant="body1">{comment.user.name}</Typography>
+                <Typography variant="body2">{comment.text}</Typography>
+              </div>
+            ))
+          ) : (
+            <Typography variant="body1">No comments yet.</Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsCommentsPopupOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </Grid>
   );
 }
