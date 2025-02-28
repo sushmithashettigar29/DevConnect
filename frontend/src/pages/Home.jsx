@@ -11,6 +11,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  TextField,
 } from "@mui/material";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import CommentIcon from "@mui/icons-material/Comment";
@@ -20,6 +21,8 @@ function Home() {
   const [following, setFollowing] = useState(new Set());
   const [comments, setComments] = useState([]);
   const [isCommentsPopupOpen, setIsCommentsPopupOpen] = useState(false);
+  const [selectedPostId, setSelectedPostId] = useState(null);
+  const [newComment, setNewComment] = useState("");
 
   const userId = localStorage.getItem("userId");
 
@@ -39,7 +42,29 @@ function Home() {
         console.error("Error fetching posts", error);
       }
     };
+    const fetchFollowing = async () => {
+      try {
+        const userId = localStorage.getItem("userId");
+        console.log("Fetching following list for user ID:", userId);
+
+        const res = await axios.get(
+          `http://localhost:5000/api/users/following/${userId}`
+        );
+
+        console.log("Following list response:", res.data);
+
+        if (Array.isArray(res.data)) {
+          setFollowing(new Set(res.data.map((user) => user._id)));
+        } else {
+          console.error("Expected an array of users, but got:", res.data);
+        }
+      } catch (error) {
+        console.error("Error fetching following list", error);
+      }
+    };
+
     fetchPosts();
+    fetchFollowing();
   }, []);
 
   const handleLike = async (postId) => {
@@ -66,22 +91,34 @@ function Home() {
     }
   };
 
-  const handleFollow = async (userId) => {
+  const handleFollow = async (followerUserId) => {
     try {
-      await axios.post(`http://localhost:5000/api/user/follow/${userId}`);
-      setFollowing((prev) => new Set([...prev, userId]));
+      await axios.post(
+        `http://localhost:5000/api/users/follow/${followerUserId}`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
+      setFollowing((prev) => new Set([...Array.from(prev), followerUserId]));
     } catch (error) {
       console.error("Error following user", error);
     }
   };
 
-  const handleUnfollow = async (userId) => {
+  const handleUnfollow = async (followedUserId) => {
     try {
-      await axios.post(`http://localhost:5000/api/user/unfollow/${userId}`);
+      await axios.post(
+        `http://localhost:5000/api/users/unfollow/${followedUserId}`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
       setFollowing((prev) => {
         const newSet = new Set(prev);
-        newSet.delete(userId);
-        return newSet;
+        newSet.delete(followedUserId);
+        return new Set(newSet);
       });
     } catch (error) {
       console.error("Error unfollowing user", error);
@@ -94,9 +131,34 @@ function Home() {
         `http://localhost:5000/api/posts/comments/${postId}`
       );
       setComments(res.data);
+      setSelectedPostId(postId);
       setIsCommentsPopupOpen(true);
     } catch (error) {
       console.error("Error fetching comments", error);
+    }
+  };
+
+  const handleCommentSubmit = async () => {
+    try {
+      if (!newComment.trim()) {
+        alert("Comment conanot be empty");
+        return;
+      }
+
+      await axios.post(`http://localhost:5000/api/posts/comment`, {
+        userId,
+        postId: selectedPostId,
+        text: newComment,
+      });
+
+      setComments((prevComments) => [
+        ...prevComments,
+        { user: { _id: userId, name: "You" }, text: newComment },
+      ]);
+
+      setNewComment("");
+    } catch (error) {
+      console.log("Error submitting comment", error);
     }
   };
   return (
@@ -127,7 +189,7 @@ function Home() {
                       </Grid>
                     </Grid>
                   </Grid>
-                  {post.user._id !== userId && ( // Hide follow button for current user's posts
+                  {post.user._id !== userId && (
                     <Grid item>
                       {following.has(post.user._id) ? (
                         <Button
@@ -218,9 +280,21 @@ function Home() {
           ) : (
             <Typography variant="body1">No comments yet.</Typography>
           )}
+
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder="Write a comment..."
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)} // Corrected here
+            sx={{ marginTop: 2 }}
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setIsCommentsPopupOpen(false)}>Close</Button>
+          <Button onClick={handleCommentSubmit} color="primary">
+            Submit
+          </Button>
         </DialogActions>
       </Dialog>
     </Grid>

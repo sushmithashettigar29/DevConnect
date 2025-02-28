@@ -54,7 +54,7 @@ router.post("/follow/:id", authenticate, async (req, res) => {
       });
       await notification.save();
 
-      res.json({ message: "User followed successfully" });
+      res.json({ message: "User followed successfully", followed: true });
     } else {
       res.status(400).json({ message: "You already follow this user" });
     }
@@ -79,24 +79,46 @@ router.post("/unfollow/:id", authenticate, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (currentUser.following.includes(id.toString())) {
+    if (currentUser.following.includes(id)) {
       currentUser.following = currentUser.following.filter(
         (uid) => uid.toString() !== id
       );
+
       userToUnfollow.followers = userToUnfollow.followers.filter(
         (uid) => uid.toString() !== userId
       );
+
       await currentUser.save();
       await userToUnfollow.save();
-      res.json({ message: "User unfollowed successfully" });
+
+      return res.json({ message: "User unfollowed successfully" });
     } else {
-      res.status(400).json({ message: "You are not following this user" });
+      return res.status(400).json({ message: "Not following this user" });
     }
   } catch (error) {
-    console.error("Error unfollowing user:", error);
-    res
-      .status(500)
-      .json({ message: "An error occurred while unfollowing the user" });
+    console.error("Unfollow error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Get following list of a user
+router.get("/following/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId).populate(
+      "following",
+      "username profilePicture"
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(user.following);
+  } catch (error) {
+    console.error("Error fetching following list:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
