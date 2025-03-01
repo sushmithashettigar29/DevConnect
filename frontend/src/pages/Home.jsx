@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import moment from "moment";
 import axios from "axios";
 import {
   Card,
@@ -12,9 +13,11 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  Box,
 } from "@mui/material";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import CommentIcon from "@mui/icons-material/Comment";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 
 function Home() {
   const [posts, setPosts] = useState([]);
@@ -80,8 +83,9 @@ function Home() {
             ? {
                 ...post,
                 likes: res.data.liked
-                  ? [...post.likes, userId]
-                  : post.likes.filter((id) => id !== userId),
+                  ? [...post.likes, userId] // Add user to likes
+                  : post.likes.filter((id) => id !== userId), // Remove user from likes
+                likeCount: res.data.likeCount, // ✅ Update the like count from backend
               }
             : post
         )
@@ -232,11 +236,16 @@ function Home() {
                 <Grid container spacing={1} sx={{ marginTop: 1 }}>
                   <Grid item>
                     <Button
-                      startIcon={<FavoriteIcon />}
-                      color="primary"
+                      startIcon={
+                        post.likes.includes(userId) ? (
+                          <FavoriteIcon color="error" /> // Filled red heart if liked
+                        ) : (
+                          <FavoriteBorderIcon /> // Outlined heart if not liked
+                        )
+                      }
                       onClick={() => handleLike(post._id)}
                     >
-                      {post.likes.includes(userId) ? "Unlike" : "Like"}
+                      {post.likeCount} {/* ✅ Display correct like count */}
                     </Button>
                   </Grid>
                   <Grid item>
@@ -249,6 +258,12 @@ function Home() {
                     </Button>
                   </Grid>
                 </Grid>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "gray", marginTop: 1 }}
+                >
+                  {moment(post.createdAt).fromNow()}
+                </Typography>
               </CardContent>
             </Card>
           </Grid>
@@ -263,18 +278,39 @@ function Home() {
       <Dialog
         open={isCommentsPopupOpen}
         onClose={() => setIsCommentsPopupOpen(false)}
+        fullWidth
       >
         <DialogTitle>Comments</DialogTitle>
         <DialogContent>
           {comments.length > 0 ? (
             comments.map((comment) => (
               <div key={comment._id} style={{ marginTop: "10px" }}>
-                <Avatar
-                  src={comment.user.profilePicture}
-                  alt={comment.user.name}
-                />
-                <Typography variant="body1">{comment.user.name}</Typography>
-                <Typography variant="body2">{comment.text}</Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1.2,
+                    mb: 1,
+                  }}
+                >
+                  <Avatar
+                    src={comment.user.profilePicture}
+                    alt={comment.user.name}
+                    sx={{ width: 36, height: 36 }}
+                  />
+                  <Typography variant="body1" fontWeight="bold">
+                    {comment.user.name}
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    sx={{ marginLeft: 6, color: "gray" }}
+                  >
+                    {moment(comment.createdAt).fromNow()}
+                  </Typography>
+                </Box>
+                <Typography variant="body2" sx={{ marginLeft: 6, mb: 2 }}>
+                  {comment.text}
+                </Typography>
               </div>
             ))
           ) : (

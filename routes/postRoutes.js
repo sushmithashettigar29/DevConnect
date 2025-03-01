@@ -65,27 +65,27 @@ router.post("/like", async (req, res) => {
     const post = await Post.findById(postId);
     if (!post) return res.status(404).json({ message: "Post not found" });
 
-    if (post.likes.includes(userId)) {
-      post.likes = post.likes.filter((id) => id.toString() !== userId);
-      await post.save();
-      return res.json({ message: "Post unliked" });
-    } else {
-      post.likes.push(userId);
+    const hasLiked = post.likes.includes(userId);
 
-      if (post.user.toString() !== userId) {
-        const notification = new Notification({
-          user: post.user,
-          sender: userId,
-          type: "like",
-          post: postId,
-        });
-        await notification.save();
-      }
+    if (hasLiked) {
+      // Unlike the post
+      post.likes = post.likes.filter((id) => id.toString() !== userId);
+      post.likeCount = post.likes.length; // Update likeCount
+    } else {
+      // Like the post
+      post.likes.push(userId);
+      post.likeCount = post.likes.length; // Update likeCount
     }
 
-    await post.save();
-    return res.json({ message: "Post liked" });
+    await post.save(); // Save changes to DB
+
+    return res.json({
+      message: hasLiked ? "Post unliked" : "Post liked",
+      liked: !hasLiked,
+      likeCount: post.likeCount, // Send updated like count
+    });
   } catch (error) {
+    console.error("Error in like route:", error);
     res
       .status(500)
       .json({ message: "Error liking post", error: error.message });
