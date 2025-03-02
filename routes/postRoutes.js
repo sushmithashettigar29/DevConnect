@@ -197,50 +197,81 @@ router.delete("/delete/:postId", async (req, res) => {
 });
 
 // Delete comment
-router.delete("/comment/:commentId", async (req, res) => {
-  const { commentId } = req.params;
+router.delete("/comment/:postId/:commentId", async (req, res) => {
+  const { postId, commentId } = req.params;
   const { userId } = req.body;
 
   try {
-    const comment = await Comment.findById(commentId);
-    if (!comment) {
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    // Find the comment to delete
+    const commentIndex = post.comments.findIndex(
+      (comment) => comment._id.toString() === commentId
+    );
+
+    if (commentIndex === -1) {
       return res.status(404).json({ message: "Comment not found" });
     }
 
     // Check if the user is authorized to delete the comment
-    if (comment.user.toString() !== userId) {
+    if (post.comments[commentIndex].user.toString() !== userId) {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
-    await Comment.findByIdAndDelete(commentId);
-    res.status(200).json({ message: "Comment deleted successfully" });
+    // Remove the comment from the array
+    post.comments.splice(commentIndex, 1);
+    post.commentCount = post.comments.length; // Update comment count
+    await post.save();
+
+    res.status(200).json({ message: "Comment deleted successfully", post });
   } catch (error) {
     res.status(500).json({ message: "Error deleting comment", error });
   }
 });
 
 // Comment reply
-router.post("/comment/:commentId/reply", async (req, res) => {
-  const { commentId } = req.params;
+router.post("/comment/:postId/:commentId/reply", async (req, res) => {
+  const { postId, commentId } = req.params;
   const { userId, text } = req.body;
 
   try {
-    const comment = await Comment.findById(commentId);
-    if (!comment) {
-      return res.status(404).json({ message: "Comment not found" });
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
     }
 
+    // Find the parent comment
+    const parentComment = post.comments.find(
+      (comment) => comment._id.toString() === commentId
+    );
+
+    if (!parentComment) {
+      return res.status(404).json({ message: "Parent comment not found" });
+    }
+
+    // Create the reply
     const reply = {
       user: userId,
       text,
+      createdAt: new Date(),
     };
 
-    comment.replies.push(reply);
-    await comment.save();
+    // Add the reply to the parent comment
+    if (!parentComment.replies) {
+      parentComment.replies = []; // Initialize replies array if it doesn't exist
+    }
+    parentComment.replies.push(reply);
 
-    res.status(201).json(reply);
+    // Save the updated post
+    await post.save();
+
+    res.status(201).json({ message: "Reply added successfully", reply });
   } catch (error) {
     res.status(500).json({ message: "Error replying to comment", error });
   }
 });
+
 module.exports = router;

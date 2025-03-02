@@ -169,7 +169,7 @@ function Home() {
   const handleDeleteComment = async (commentId) => {
     try {
       await axios.delete(
-        `http://localhost:5000/api/posts/comment/${commentId}`,
+        `http://localhost:5000/api/posts/comment/${selectedPostId}/${commentId}`,
         {
           data: { userId },
         }
@@ -196,7 +196,7 @@ function Home() {
   const handleReplyComment = async (commentId, replyText) => {
     try {
       const res = await axios.post(
-        `http://localhost:5000/api/posts/comment/${commentId}/reply`,
+        `http://localhost:5000/api/posts/comment/${selectedPostId}/${commentId}/reply`,
         {
           userId,
           text: replyText,
@@ -207,7 +207,10 @@ function Home() {
       setComments((prevComments) =>
         prevComments.map((comment) =>
           comment._id === commentId
-            ? { ...comment, replies: [...(comment.replies || []), res.data] }
+            ? {
+                ...comment,
+                replies: [...(comment.replies || []), res.data.reply],
+              }
             : comment
         )
       );

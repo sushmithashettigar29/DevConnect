@@ -11,7 +11,6 @@ import {
 } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import moment from "moment";
-import PropTypes from "prop-types";
 
 const Comment = ({ comment, userId, postOwnerId, onDelete, onReply }) => {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -21,7 +20,6 @@ const Comment = ({ comment, userId, postOwnerId, onDelete, onReply }) => {
   const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
 
-  // Check if the current user can delete the comment
   const canDelete = userId === comment.user._id || userId === postOwnerId;
 
   const handleReplySubmit = async () => {
@@ -80,6 +78,16 @@ const Comment = ({ comment, userId, postOwnerId, onDelete, onReply }) => {
         {comment.text}
       </Typography>
 
+      {/* Display existing replies */}
+      {comment.replies &&
+        comment.replies.map((reply) => (
+          <Box key={reply._id} sx={{ marginLeft: 6, mt: 1 }}>
+            <Typography variant="body2" sx={{ fontStyle: "italic" }}>
+              {reply.user.name}: {reply.text}
+            </Typography>
+          </Box>
+        ))}
+
       {/* Reply Input */}
       {showReplyInput && (
         <Box sx={{ marginLeft: 6, mt: 1 }}>
@@ -104,21 +112,5 @@ const Comment = ({ comment, userId, postOwnerId, onDelete, onReply }) => {
     </div>
   );
 };
-Comment.propTypes = {
-    comment: PropTypes.shape({
-      _id: PropTypes.string.isRequired,
-      text: PropTypes.string.isRequired,
-      user: PropTypes.shape({
-        _id: PropTypes.string.isRequired,
-        name: PropTypes.string.isRequired,
-        profilePicture: PropTypes.string,
-      }).isRequired,
-      createdAt: PropTypes.string.isRequired,
-    }).isRequired,
-    userId: PropTypes.string.isRequired,
-    postOwnerId: PropTypes.string.isRequired,
-    onDelete: PropTypes.func.isRequired,
-    onReply: PropTypes.func.isRequired,
-  };
-  
+
 export default Comment;

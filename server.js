@@ -23,8 +23,8 @@ app.set("io", io);
 app.use(express.json());
 app.use(
   cors({
-    origin: "http://localhost:5173", // Allow requests from this origin
-    credentials: true, // Allow cookies and credentials
+    origin: "http://localhost:5173",
+    credentials: true,
   })
 );
 app.use(cookieParser());
