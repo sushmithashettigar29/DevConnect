@@ -3,6 +3,7 @@ const multer = require("multer");
 const path = require("path");
 const Post = require("../models/Post");
 const Notification = require("../models/Notification");
+const mongoose = require("mongoose");
 
 const router = express.Router();
 
@@ -243,7 +244,7 @@ router.post("/comment/:postId/:commentId/reply", async (req, res) => {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    // Find the parent comment
+    // Find the parent comment inside the post
     const parentComment = post.comments.find(
       (comment) => comment._id.toString() === commentId
     );
@@ -253,23 +254,27 @@ router.post("/comment/:postId/:commentId/reply", async (req, res) => {
     }
 
     // Create the reply
-    const reply = {
-      user: userId,
+    const newReply = {
+      user: new mongoose.Types.ObjectId(userId), // Ensure ObjectId format
       text,
       createdAt: new Date(),
     };
 
-    // Add the reply to the parent comment
+    // Add reply inside the replies array
     if (!parentComment.replies) {
-      parentComment.replies = []; // Initialize replies array if it doesn't exist
+      parentComment.replies = [];
     }
-    parentComment.replies.push(reply);
+    parentComment.replies.push(newReply);
 
-    // Save the updated post
+    // Save the updated post with the new reply
     await post.save();
 
-    res.status(201).json({ message: "Reply added successfully", reply });
+    res.status(201).json({
+      message: "Reply added successfully",
+      reply: newReply,
+    });
   } catch (error) {
+    console.error("Error replying to comment", error);
     res.status(500).json({ message: "Error replying to comment", error });
   }
 });

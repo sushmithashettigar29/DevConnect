@@ -197,19 +197,15 @@ function Home() {
     try {
       const res = await axios.post(
         `http://localhost:5000/api/posts/comment/${selectedPostId}/${commentId}/reply`,
-        {
-          userId,
-          text: replyText,
-        }
+        { userId, text: replyText }
       );
 
-      // Update the UI with the new reply
       setComments((prevComments) =>
         prevComments.map((comment) =>
           comment._id === commentId
             ? {
                 ...comment,
-                replies: [...(comment.replies || []), res.data.reply],
+                replies: [...(comment.replies || []), res.data.reply], // Append new reply
               }
             : comment
         )
