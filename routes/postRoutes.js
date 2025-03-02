@@ -105,6 +105,7 @@ router.post("/comment", async (req, res) => {
 
     const comment = { user: userId, text, createdAt: new Date() };
     post.comments.push(comment);
+    post.commentCount = post.comments.length;
     await post.save();
 
     if (post.user.toString() !== userId) {
@@ -124,7 +125,7 @@ router.post("/comment", async (req, res) => {
   }
 });
 
-router.get("/comments/:postId", async (req, res) => {
+router.get("/comment/:postId", async (req, res) => {
   try {
     const { postId } = req.params;
     const post = await Post.findById(postId).populate(
@@ -196,32 +197,50 @@ router.delete("/delete/:postId", async (req, res) => {
 });
 
 // Delete comment
-router.delete("/comment/:postId/:commentId", async (req, res) => {
+router.delete("/comment/:commentId", async (req, res) => {
+  const { commentId } = req.params;
+  const { userId } = req.body;
+
   try {
-    const { postId, commentId } = req.params;
-    const { userId } = req.body;
-
-    const post = await Post.findById(postId);
-    if (!post) return res.status(404).json({ message: "Post not found" });
-
-    const comment = post.comments.find((c) => c._id.toString() === commentId);
-    if (!comment) return res.status(404).json({ message: "Comment not found" });
-
-    if (comment.user.toString() !== userId) {
-      return res
-        .status(403)
-        .json({ message: "You can only delete your own comment" });
+    const comment = await Comment.findById(commentId);
+    if (!comment) {
+      return res.status(404).json({ message: "Comment not found" });
     }
 
-    post.comments = post.comments.filter((c) => c._id.toString() !== commentId);
-    await post.save();
+    // Check if the user is authorized to delete the comment
+    if (comment.user.toString() !== userId) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
 
-    res.json({ message: "Comment deleted successfully" });
+    await Comment.findByIdAndDelete(commentId);
+    res.status(200).json({ message: "Comment deleted successfully" });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error deleteing comment", error: error.message });
+    res.status(500).json({ message: "Error deleting comment", error });
   }
 });
 
+// Comment reply
+router.post("/comment/:commentId/reply", async (req, res) => {
+  const { commentId } = req.params;
+  const { userId, text } = req.body;
+
+  try {
+    const comment = await Comment.findById(commentId);
+    if (!comment) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+
+    const reply = {
+      user: userId,
+      text,
+    };
+
+    comment.replies.push(reply);
+    await comment.save();
+
+    res.status(201).json(reply);
+  } catch (error) {
+    res.status(500).json({ message: "Error replying to comment", error });
+  }
+});
 module.exports = router;

@@ -13,11 +13,11 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Box,
 } from "@mui/material";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import CommentIcon from "@mui/icons-material/Comment";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import Comment from "../components/Comment";
 
 function Home() {
   const [posts, setPosts] = useState([]);
@@ -33,8 +33,6 @@ function Home() {
     const fetchPosts = async () => {
       try {
         const res = await axios.get("http://localhost:5000/api/posts/all");
-        console.log("Fetched posts:", res.data);
-
         if (Array.isArray(res.data)) {
           setPosts(res.data);
         } else {
@@ -48,14 +46,9 @@ function Home() {
     const fetchFollowing = async () => {
       try {
         const userId = localStorage.getItem("userId");
-        console.log("Fetching following list for user ID:", userId);
-
         const res = await axios.get(
           `http://localhost:5000/api/users/following/${userId}`
         );
-
-        console.log("Following list response:", res.data);
-
         if (Array.isArray(res.data)) {
           setFollowing(new Set(res.data.map((user) => user._id)));
         } else {
@@ -132,7 +125,7 @@ function Home() {
   const handleCommentClick = async (postId) => {
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/posts/comments/${postId}`
+        `http://localhost:5000/api/posts/comment/${postId}`
       );
       setComments(res.data);
       setSelectedPostId(postId);
@@ -160,11 +153,69 @@ function Home() {
         { user: { _id: userId, name: "You" }, text: newComment },
       ]);
 
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post._id === selectedPostId
+            ? { ...post, commentCount: post.commentCount + 1 }
+            : post
+        )
+      );
       setNewComment("");
     } catch (error) {
       console.log("Error submitting comment", error);
     }
   };
+
+  const handleDeleteComment = async (commentId) => {
+    try {
+      await axios.delete(
+        `http://localhost:5000/api/posts/comment/${commentId}`,
+        {
+          data: { userId },
+        }
+      );
+
+      // Remove the deleted comment from UI
+      setComments((prevComments) =>
+        prevComments.filter((c) => c._id !== commentId)
+      );
+
+      // Update comment count on post
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post._id === selectedPostId
+            ? { ...post, commentCount: post.commentCount - 1 }
+            : post
+        )
+      );
+    } catch (error) {
+      console.error("Error deleting comment", error);
+    }
+  };
+
+  const handleReplyComment = async (commentId, replyText) => {
+    try {
+      const res = await axios.post(
+        `http://localhost:5000/api/posts/comment/${commentId}/reply`,
+        {
+          userId,
+          text: replyText,
+        }
+      );
+
+      // Update the UI with the new reply
+      setComments((prevComments) =>
+        prevComments.map((comment) =>
+          comment._id === commentId
+            ? { ...comment, replies: [...(comment.replies || []), res.data] }
+            : comment
+        )
+      );
+    } catch (error) {
+      console.error("Error replying to comment", error);
+    }
+  };
+
   return (
     <Grid container spacing={2} justifyContent="center">
       {posts.length > 0 ? (
@@ -245,16 +296,15 @@ function Home() {
                       }
                       onClick={() => handleLike(post._id)}
                     >
-                      {post.likeCount} {/* ✅ Display correct like count */}
+                      {post.likeCount}
                     </Button>
                   </Grid>
                   <Grid item>
                     <Button
                       startIcon={<CommentIcon />}
-                      color="secondary"
                       onClick={() => handleCommentClick(post._id)}
                     >
-                      Comment
+                      {post.commentCount}
                     </Button>
                   </Grid>
                 </Grid>
@@ -284,34 +334,16 @@ function Home() {
         <DialogContent>
           {comments.length > 0 ? (
             comments.map((comment) => (
-              <div key={comment._id} style={{ marginTop: "10px" }}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1.2,
-                    mb: 1,
-                  }}
-                >
-                  <Avatar
-                    src={comment.user.profilePicture}
-                    alt={comment.user.name}
-                    sx={{ width: 36, height: 36 }}
-                  />
-                  <Typography variant="body1" fontWeight="bold">
-                    {comment.user.name}
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    sx={{ marginLeft: 6, color: "gray" }}
-                  >
-                    {moment(comment.createdAt).fromNow()}
-                  </Typography>
-                </Box>
-                <Typography variant="body2" sx={{ marginLeft: 6, mb: 2 }}>
-                  {comment.text}
-                </Typography>
-              </div>
+              <Comment
+                key={comment._id}
+                comment={comment}
+                userId={userId}
+                postOwnerId={
+                  posts.find((p) => p._id === selectedPostId)?.user?._id
+                }
+                onDelete={handleDeleteComment}
+                onReply={handleReplyComment}
+              />
             ))
           ) : (
             <Typography variant="body1">No comments yet.</Typography>
