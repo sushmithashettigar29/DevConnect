@@ -129,10 +129,9 @@ router.post("/comment", async (req, res) => {
 router.get("/comment/:postId", async (req, res) => {
   try {
     const { postId } = req.params;
-    const post = await Post.findById(postId).populate(
-      "comments.user",
-      "name profilePicture"
-    );
+    const post = await Post.findById(postId)
+      .populate("comments.user", "name profilePicture")
+      .populate("comments.replies.user", "name profilePicture");
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
@@ -244,7 +243,7 @@ router.post("/comment/:postId/:commentId/reply", async (req, res) => {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    // Find the parent comment inside the post
+    // Find the parent comment
     const parentComment = post.comments.find(
       (comment) => comment._id.toString() === commentId
     );
@@ -265,6 +264,9 @@ router.post("/comment/:postId/:commentId/reply", async (req, res) => {
       parentComment.replies = [];
     }
     parentComment.replies.push(newReply);
+
+    // Increment the comment count
+    post.commentCount += 1;
 
     // Save the updated post with the new reply
     await post.save();

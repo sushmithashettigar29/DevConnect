@@ -200,6 +200,7 @@ function Home() {
         { userId, text: replyText }
       );
 
+      // Update the UI with the new reply
       setComments((prevComments) =>
         prevComments.map((comment) =>
           comment._id === commentId
@@ -208,6 +209,15 @@ function Home() {
                 replies: [...(comment.replies || []), res.data.reply], // Append new reply
               }
             : comment
+        )
+      );
+
+      // Update the comment count in the posts list
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post._id === selectedPostId
+            ? { ...post, commentCount: post.commentCount + 1 }
+            : post
         )
       );
     } catch (error) {

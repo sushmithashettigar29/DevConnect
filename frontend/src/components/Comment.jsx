@@ -82,9 +82,16 @@ const Comment = ({ comment, userId, postOwnerId, onDelete, onReply }) => {
       {comment.replies &&
         comment.replies.map((reply) => (
           <Box key={reply._id} sx={{ marginLeft: 6, mt: 1 }}>
-            <Typography variant="body2" sx={{ fontStyle: "italic" }}>
-              {reply.user.name}: {reply.text}
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Avatar
+                src={reply.user.profilePicture}
+                alt={reply.user.name}
+                sx={{ width: 24, height: 24 }}
+              />
+              <Typography variant="body2" sx={{ fontStyle: "italic" }}>
+                {reply.user.name}: {reply.text}
+              </Typography>
+            </Box>
           </Box>
         ))}
 
