@@ -281,4 +281,55 @@ router.post("/comment/:postId/:commentId/reply", async (req, res) => {
   }
 });
 
+// Delete replied comment
+router.delete(
+  "/comment/:postId/:commentId/reply/:replyId",
+  async (req, res) => {
+    const { postId, commentId, replyId } = req.params;
+    const { userId } = req.body;
+
+    try {
+      const post = await Post.findById(postId);
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+
+      // Find the parent comment
+      const parentComment = post.comments.find(
+        (comment) => comment._id.toString() === commentId
+      );
+
+      if (!parentComment) {
+        return res.status(404).json({ message: "Parent comment not found" });
+      }
+
+      // Find the reply to delete
+      const replyIndex = parentComment.replies.findIndex(
+        (reply) => reply._id.toString() === replyId
+      );
+
+      if (replyIndex === -1) {
+        return res.status(404).json({ message: "Reply not found" });
+      }
+
+      // Check if the user is authorized to delete the reply
+      if (parentComment.replies[replyIndex].user.toString() !== userId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      // Remove the reply from the array
+      parentComment.replies.splice(replyIndex, 1);
+
+      // Decrement the comment count
+      post.commentCount -= 1;
+
+      // Save the updated post
+      await post.save();
+
+      res.status(200).json({ message: "Reply deleted successfully", post });
+    } catch (error) {
+      res.status(500).json({ message: "Error deleting reply", error });
+    }
+  }
+);
 module.exports = router;

@@ -352,6 +352,9 @@ function Home() {
                 }
                 onDelete={handleDeleteComment}
                 onReply={handleReplyComment}
+                selectedPostId={selectedPostId}
+                setComments={setComments} // Pass setComments
+                setPosts={setPosts} // Pass setPosts
               />
             ))
           ) : (
