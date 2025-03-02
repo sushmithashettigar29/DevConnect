@@ -46,15 +46,13 @@ router.post("/create", upload.single("image"), async (req, res) => {
 router.get("/all", async (req, res) => {
   try {
     const posts = await Post.find()
-      .populate("user", "name email profilePicture bio linkedin github")
-      .populate("comments.user", "name email")
+      .populate("user", "name profilePicture") // Ensure profilePicture is populated
+      .populate("comments.user", "name profilePicture") // Populate profilePicture for comments
       .sort({ createdAt: -1 });
 
     res.json(posts);
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error fetching posts", error: error.message });
+    res.status(500).json({ message: "Error fetching posts", error });
   }
 });
 
@@ -130,17 +128,16 @@ router.get("/comment/:postId", async (req, res) => {
   try {
     const { postId } = req.params;
     const post = await Post.findById(postId)
-      .populate("comments.user", "name profilePicture")
-      .populate("comments.replies.user", "name profilePicture");
+      .populate("comments.user", "name profilePicture") // Populate profilePicture for comments
+      .populate("comments.replies.user", "name profilePicture"); // Populate profilePicture for replies
+
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
 
     res.json(post.comments);
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error fetching comments", error: error.message });
+    res.status(500).json({ message: "Error fetching comments", error });
   }
 });
 

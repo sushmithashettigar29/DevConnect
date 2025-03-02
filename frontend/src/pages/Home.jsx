@@ -242,7 +242,8 @@ function Home() {
                     <Grid container alignItems="center" spacing={1}>
                       <Grid item>
                         <Avatar
-                          src={post.user?.profilePicture || ""}
+                          src={post.user?.profilePicture
+                            ? `http://localhost:5000${post.user.profilePicture}` : ""}
                           alt={post.user?.name || "User"}
                         />
                       </Grid>

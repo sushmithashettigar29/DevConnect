@@ -86,7 +86,11 @@ const Comment = ({
     <div style={{ marginTop: "10px" }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.2, mb: 1 }}>
         <Avatar
-          src={comment.user.profilePicture}
+          src={
+            comment.user.profilePicture
+              ? `http://localhost:5000${comment.user.profilePicture}`
+              : ""
+          }
           alt={comment.user.name}
           sx={{ width: 36, height: 36 }}
         />
@@ -137,10 +141,15 @@ const Comment = ({
           <Box key={reply._id} sx={{ marginLeft: 6, mt: 1 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Avatar
-                src={reply.user.profilePicture}
+                src={
+                  reply.user.profilePicture
+                    ? `http://localhost:5000${reply.user.profilePicture}`
+                    : ""
+                }
                 alt={reply.user.name}
                 sx={{ width: 24, height: 24 }}
               />
+
               <Typography variant="body2" sx={{ fontStyle: "italic" }}>
                 {reply.user.name}: {reply.text}
               </Typography>
