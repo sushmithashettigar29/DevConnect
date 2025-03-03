@@ -451,7 +451,7 @@ function Home() {
                   post.image !== "null" &&
                   post.image !== "undefined" && (
                     <img
-                      src={post.image}
+                      src={`http://localhost:5000${post.image}`}
                       alt="Post"
                       style={{ width: "100%", marginTop: 10, borderRadius: 8 }}
                       onError={(e) => e.target.remove()}

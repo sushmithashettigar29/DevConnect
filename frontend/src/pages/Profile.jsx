@@ -112,6 +112,16 @@ const Profile = () => {
           >
             Edit Profile
           </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => navigate("/create-post")} // Navigate to CreatePost page
+          >
+            + Create Post
+          </Button>
+          <Button variant="contained" color="secondary">
+            + Share Resource
+          </Button>
         </Stack>
       </Paper>
     </Container>

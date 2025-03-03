@@ -13,6 +13,7 @@ import Profile from "./pages/Profile";
 import Feed from "./pages/Feed";
 import Resources from "./pages/Resources";
 import EditProfile from "./pages/EditProfile";
+import CreatePost from "./components/CreatePost";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
@@ -60,6 +61,10 @@ function App() {
         <Route
           path="/resources"
           element={isAuthenticated ? <Resources /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/create-post"
+          element={isAuthenticated ? <CreatePost /> : <Navigate to="/login" />}
         />
       </Routes>
     </Router>
