@@ -142,10 +142,11 @@ router.get("/comment/:postId", async (req, res) => {
 });
 
 // Edit Post
+// Edit Post
 router.put("/edit/:postId", upload.single("image"), async (req, res) => {
   try {
     const { postId } = req.params;
-    const { userId, content } = req.body;
+    const { userId, content, deleteImage } = req.body;
     const image = req.file ? `/uploads/${req.file.filename}` : null;
 
     const post = await Post.findById(postId);
@@ -158,7 +159,22 @@ router.put("/edit/:postId", upload.single("image"), async (req, res) => {
     }
 
     if (content) post.content = content;
-    if (image) post.image = image; // Update image if uploaded
+
+    // Handle image deletion
+    if (deleteImage === "true") {
+      if (post.image) {
+        // Delete the image file from the server (optional)
+        const fs = require("fs");
+        const path = require("path");
+        const imagePath = path.join(__dirname, "..", post.image);
+        if (fs.existsSync(imagePath)) {
+          fs.unlinkSync(imagePath);
+        }
+      }
+      post.image = null; // Remove the image reference from the post
+    } else if (image) {
+      post.image = image; // Update image if a new one is uploaded
+    }
 
     await post.save();
     res.json({ message: "Post updated successfully", post });
