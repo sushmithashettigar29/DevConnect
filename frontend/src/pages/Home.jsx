@@ -35,6 +35,7 @@ function Home() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editedContent, setEditedContent] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [newImage, setNewImage] = useState(null); 
 
   const userId = localStorage.getItem("userId");
 
@@ -242,6 +243,7 @@ function Home() {
   const handleMenuClose = () => {
     setAnchorEl(null);
     setSelectedPostIdForMenu(null);
+    setNewImage(null);
   };
 
   const handleEditPost = (postId) => {
@@ -258,6 +260,12 @@ function Home() {
 
   const handleSaveEdit = async () => {
     try {
+      const formData = new FormData();
+    formData.append("userId", userId);
+    formData.append("content", editedContent);
+    if (newImage) {
+      formData.append("image", newImage);
+    }
       const res = await axios.put(
         `http://localhost:5000/api/posts/edit/${selectedPostIdForMenu}`,
         {
@@ -269,7 +277,7 @@ function Home() {
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
           post._id === selectedPostIdForMenu
-            ? { ...post, content: editedContent }
+            ? { ...post, content: editedContent, image : res.data.post.image, }
             : post
         )
       );
@@ -377,32 +385,37 @@ function Home() {
                     >
                       Edit
                     </MenuItem>
-                    <Dialog
-                      open={isEditDialogOpen}
-                      onClose={() => setIsEditDialogOpen(false)}
-                      fullWidth
-                    >
-                      <DialogTitle>Edit Post</DialogTitle>
-                      <DialogContent>
-                        <TextField
-                          fullWidth
-                          multiline
-                          rows={4}
-                          variant="outlined"
-                          placeholder="Edit your post..."
-                          value={editedContent}
-                          onChange={(e) => setEditedContent(e.target.value)}
-                        />
-                      </DialogContent>
-                      <DialogActions>
-                        <Button onClick={() => setIsEditDialogOpen(false)}>
-                          Cancel
-                        </Button>
-                        <Button onClick={handleSaveEdit} color="primary">
-                          Save
-                        </Button>
-                      </DialogActions>
-                    </Dialog>
+<Dialog
+  open={isEditDialogOpen}
+  onClose={() => setIsEditDialogOpen(false)}
+  fullWidth
+>
+  <DialogTitle>Edit Post</DialogTitle>
+  <DialogContent>
+    <TextField
+      fullWidth
+      multiline
+      rows={4}
+      variant="outlined"
+      placeholder="Edit your post..."
+      value={editedContent}
+      onChange={(e) => setEditedContent(e.target.value)}
+      sx={{ marginBottom: 2 }}
+    />
+    <input
+      type="file"
+      accept="image/*"
+      onChange={(e) => setNewImage(e.target.files[0])}
+      style={{ marginBottom: 2 }}
+    />
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+    <Button onClick={handleSaveEdit} color="primary">
+      Save
+    </Button>
+  </DialogActions>
+</Dialog>
                     <MenuItem
                       onClick={() => handleDeletePost(selectedPostIdForMenu)}
                     >
