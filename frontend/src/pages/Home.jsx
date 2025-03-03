@@ -13,11 +13,15 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  IconButton,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import CommentIcon from "@mui/icons-material/Comment";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import Comment from "../components/Comment";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 function Home() {
   const [posts, setPosts] = useState([]);
@@ -26,6 +30,11 @@ function Home() {
   const [isCommentsPopupOpen, setIsCommentsPopupOpen] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState(null);
   const [newComment, setNewComment] = useState("");
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedPostIdForMenu, setSelectedPostIdForMenu] = useState(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editedContent, setEditedContent] = useState("");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const userId = localStorage.getItem("userId");
 
@@ -225,6 +234,81 @@ function Home() {
     }
   };
 
+  const handleMenuOpen = (event, postId) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedPostIdForMenu(postId);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedPostIdForMenu(null);
+  };
+
+  const handleEditPost = (postId) => {
+    try {
+      const post = posts.find((p) => p._id === postId);
+      if (!post) ReadableStreamDefaultController;
+      setEditedContent(post.content);
+      setIsEditDialogOpen(true);
+      setSelectedPostIdForMenu(postId);
+    } catch (error) {
+      console.log("Error preparing to edit post", error);
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      const res = await axios.put(
+        `http://localhost:5000/api/posts/edit/${selectedPostIdForMenu}`,
+        {
+          userId,
+          content: editedContent,
+        }
+      );
+
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post._id === selectedPostIdForMenu
+            ? { ...post, content: editedContent }
+            : post
+        )
+      );
+
+      setIsEditDialogOpen(false);
+      handleMenuClose();
+    } catch (error) {
+      console.error("Error editing post", error);
+    }
+  };
+
+  const handleDeletePost = async (postId) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/posts/delete/${postId}`, {
+        data: { userId },
+      });
+
+      setPosts((prevPosts) => prevPosts.filter((post) => post._id !== postId));
+
+      setIsDeleteDialogOpen(false);
+      handleMenuClose();
+    } catch (error) {
+      console.error("Error deleting post", error);
+    }
+  };
+
+  const handleSharePost = (postId) => {
+    const postLink = `http://localhost:5173/posts/${postId}`;
+    navigator.clipboard
+      .writeText(postLink)
+      .then(() => {
+        alert("Post link copied to clipboard!");
+      })
+      .catch(() => {
+        alert("Failed to copy link.");
+      });
+    handleMenuClose();
+  };
+
   return (
     <Grid container spacing={2} justifyContent="center">
       {posts.length > 0 ? (
@@ -242,8 +326,11 @@ function Home() {
                     <Grid container alignItems="center" spacing={1}>
                       <Grid item>
                         <Avatar
-                          src={post.user?.profilePicture
-                            ? `http://localhost:5000${post.user.profilePicture}` : ""}
+                          src={
+                            post.user?.profilePicture
+                              ? `http://localhost:5000${post.user.profilePicture}`
+                              : ""
+                          }
                           alt={post.user?.name || "User"}
                         />
                       </Grid>
@@ -254,27 +341,104 @@ function Home() {
                       </Grid>
                     </Grid>
                   </Grid>
-                  {post.user._id !== userId && (
-                    <Grid item>
-                      {following.has(post.user._id) ? (
-                        <Button
-                          variant="outlined"
-                          color="primary"
-                          onClick={() => handleUnfollow(post.user._id)}
-                        >
-                          Following
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          onClick={() => handleFollow(post.user._id)}
-                        >
-                          Follow
-                        </Button>
-                      )}
-                    </Grid>
+                  {post.user._id !== userId ? ( // If the user is not the post owner, show Follow/Unfollow button
+                    following.has(post.user._id) ? (
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        onClick={() => handleUnfollow(post.user._id)}
+                      >
+                        Following
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() => handleFollow(post.user._id)}
+                      >
+                        Follow
+                      </Button>
+                    )
+                  ) : (
+                    // If the user is the post owner, show three-dot menu
+                    <IconButton
+                      onClick={(event) => handleMenuOpen(event, post._id)}
+                    >
+                      <MoreVertIcon />
+                    </IconButton>
                   )}
+                  <Menu
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl)}
+                    onClose={handleMenuClose}
+                  >
+                    <MenuItem
+                      onClick={() => handleEditPost(selectedPostIdForMenu)}
+                    >
+                      Edit
+                    </MenuItem>
+                    <Dialog
+                      open={isEditDialogOpen}
+                      onClose={() => setIsEditDialogOpen(false)}
+                      fullWidth
+                    >
+                      <DialogTitle>Edit Post</DialogTitle>
+                      <DialogContent>
+                        <TextField
+                          fullWidth
+                          multiline
+                          rows={4}
+                          variant="outlined"
+                          placeholder="Edit your post..."
+                          value={editedContent}
+                          onChange={(e) => setEditedContent(e.target.value)}
+                        />
+                      </DialogContent>
+                      <DialogActions>
+                        <Button onClick={() => setIsEditDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button onClick={handleSaveEdit} color="primary">
+                          Save
+                        </Button>
+                      </DialogActions>
+                    </Dialog>
+                    <MenuItem
+                      onClick={() => handleDeletePost(selectedPostIdForMenu)}
+                    >
+                      Delete
+                    </MenuItem>
+                    <Dialog
+                      open={isDeleteDialogOpen}
+                      onClose={() => setIsDeleteDialogOpen(false)}
+                      fullWidth
+                    >
+                      <DialogTitle>Delete Post</DialogTitle>
+                      <DialogContent>
+                        <Typography>
+                          Are you sure you want to delete this post?
+                        </Typography>
+                      </DialogContent>
+                      <DialogActions>
+                        <Button onClick={() => setIsDeleteDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={() =>
+                            handleDeletePost(selectedPostIdForMenu)
+                          }
+                          color="error"
+                        >
+                          Delete
+                        </Button>
+                      </DialogActions>
+                    </Dialog>
+                    <MenuItem
+                      onClick={() => handleSharePost(selectedPostIdForMenu)}
+                    >
+                      Share
+                    </MenuItem>
+                  </Menu>
                 </Grid>
 
                 {/* Post Content */}

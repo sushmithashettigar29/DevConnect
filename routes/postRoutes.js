@@ -214,7 +214,11 @@ router.delete("/comment/:postId/:commentId", async (req, res) => {
     }
 
     // Check if the user is authorized to delete the comment
-    if (post.comments[commentIndex].user.toString() !== userId) {
+    const isCommentAuthor =
+      post.comments[commentIndex].user.toString() === userId;
+    const isPostOwner = post.user.toString() === userId;
+
+    if (!isCommentAuthor && !isPostOwner) {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
