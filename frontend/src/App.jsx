@@ -14,6 +14,7 @@ import Feed from "./pages/Feed";
 import Resources from "./pages/Resources";
 import EditProfile from "./pages/EditProfile";
 import CreatePost from "./components/CreatePost";
+import ShareResource from "./components/ShareResource";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
@@ -65,6 +66,10 @@ function App() {
         <Route
           path="/create-post"
           element={isAuthenticated ? <CreatePost /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/share-resource"
+          element={isAuthenticated ? <ShareResource /> : <Navigate to="/login" />}
         />
       </Routes>
     </Router>

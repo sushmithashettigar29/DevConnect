@@ -334,20 +334,24 @@ function Home() {
   };
 
   return (
-    <Grid container spacing={2} justifyContent="center">
+    <Grid container spacing={2} justifyContent="center" sx={{ marginTop: 2 }}>
       {posts.length > 0 ? (
         posts.map((post) => (
-          <Grid item xs={12} md={6} key={post._id}>
-            <Card sx={{ marginBottom: 2 }}>
+          <Grid item xs={12} sm={6} key={post._id}>
+            <Card sx={{ marginBottom: 2, borderRadius: 2, overflow: "hidden" }}>
               <CardContent>
-                {/* User Info and Follow Button */}
                 <Grid
                   container
                   alignItems="center"
                   justifyContent="space-between"
                 >
-                  <Grid item>
-                    <Grid container alignItems="center" spacing={1}>
+                  <Grid item display="flex" alignItems="center">
+                    <Grid
+                      container
+                      alignItems="center"
+                      spacing={1}
+                      sx={{ marginBottom: 2 }}
+                    >
                       <Grid item>
                         <Avatar
                           src={
@@ -365,7 +369,7 @@ function Home() {
                       </Grid>
                     </Grid>
                   </Grid>
-                  {post.user._id !== userId ? ( // If the user is not the post owner, show Follow/Unfollow button
+                  {post.user._id !== userId ? (
                     following.has(post.user._id) ? (
                       <Button
                         variant="outlined"

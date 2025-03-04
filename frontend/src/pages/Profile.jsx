@@ -119,7 +119,7 @@ const Profile = () => {
           >
             + Create Post
           </Button>
-          <Button variant="contained" color="secondary">
+          <Button variant="contained" color="secondary" onClick={() => navigate("/share-resource")}>
             + Share Resource
           </Button>
         </Stack>

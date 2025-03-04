@@ -26,9 +26,6 @@ const Navbar = ({ setAuth }) => {
           <Button color="inherit" onClick={() => navigate("/")}>
             Home
           </Button>
-          <Button color="inherit" onClick={() => navigate("/feed")}>
-            Feed
-          </Button>
           <Button color="inherit" onClick={() => navigate("/resources")}>
             Resources
           </Button>
