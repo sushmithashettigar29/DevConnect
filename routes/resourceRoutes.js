@@ -9,17 +9,14 @@ router.post("/upload-resource", upload.single("file"), async (req, res) => {
   try {
     const { userId, title, category } = req.body;
 
-    // Validate required fields
     if (!userId || !title || !category) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    // Validate file upload
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    // Save resource to the database
     const newResource = new Resource({
       user: userId,
       title,
@@ -29,7 +26,6 @@ router.post("/upload-resource", upload.single("file"), async (req, res) => {
 
     await newResource.save();
 
-    // Respond to the client
     res.status(201).json({
       message: "Resource uploaded successfully",
       resource: newResource,
@@ -43,13 +39,43 @@ router.post("/upload-resource", upload.single("file"), async (req, res) => {
 // Get all resources route
 router.get("/", async (req, res) => {
   try {
-    const resources = await Resource.find({}).populate("user", "name");;
+    const resources = await Resource.find({}).populate("user", "name");
     res.status(200).json({ status: "ok", data: resources });
   } catch (error) {
     console.error("Failed to fetch resources:", error);
     res
       .status(500)
       .json({ message: "Failed to fetch resources", error: error.message });
+  }
+});
+
+// Delete reosurce
+router.delete("/:id", async (req, res) => {
+  try {
+    const resourceId = req.params.id;
+    const { userId } = req.body;
+
+    const resource = await Resource.findById(resourceId);
+    if (!resource) {
+      return res.status(404).json({ message: "Resource not found" });
+    }
+
+    if (resource.user.toString() !== userId) {
+      return res
+        .status(403)
+        .json({ message: "Unauthorized to delete this resource" });
+    }
+
+    await Resource.findByIdAndDelete(resourceId);
+
+    res
+      .status(200)
+      .json({ status: "ok", message: "Resource deleted successfully" });
+  } catch (error) {
+    console.log("Error deleting resource : ", error);
+    res
+      .status(500)
+      .json({ message: "Failed to delete resource", error: error.message });
   }
 });
 

@@ -12,6 +12,7 @@ import { Link } from "react-router-dom";
 
 function Resources() {
   const [resources, setResources] = useState([]);
+  const [currentUserId, setCurrentUserId] = useState(null);
 
   const fetchResources = async () => {
     try {
@@ -24,8 +25,34 @@ function Resources() {
   };
 
   useEffect(() => {
+    const userId = localStorage.getItem("userId");
+    if (userId) {
+      setCurrentUserId(userId);
+    }
     fetchResources();
   }, []);
+
+  const handleDeleteResource = async (resourceId) => {
+    try {
+      const userId = localStorage.getItem("userId");
+      console.log("Current User ID:", userId);
+      if (!userId) {
+        alert("You must be logged in to delete a resource.");
+        return;
+      }
+      const response = await axios.delete(
+        `http://localhost:5000/api/resources/${resourceId}`,
+        {
+          data: { userId },
+        }
+      );
+      if (response.data.status === "ok") {
+        fetchResources();
+      }
+    } catch (error) {
+      console.error("Error deleting resource : ", error);
+    }
+  };
 
   return (
     <Box p={4}>
@@ -43,12 +70,6 @@ function Resources() {
                 {resource.title}
               </Typography>
 
-              <Box display="flex" gap={1} mt={1}>
-                {resource.category.map((category, index) => (
-                  <Chip key={index} label={category} color="primary" />
-                ))}
-              </Box>
-
               <Box mt={2}>
                 <Button
                   variant="contained"
@@ -59,6 +80,23 @@ function Resources() {
                 >
                   Download
                 </Button>
+              </Box>
+
+              {currentUserId === resource.user._id && (
+                <Button
+                  variant="contained"
+                  color="error"
+                  sx={{ ml: 2 }}
+                  onClick={() => handleDeleteResource(resource._id)}
+                >
+                  Delete
+                </Button>
+              )}
+
+              <Box display="flex" gap={1} mt={1}>
+                {resource.category.map((category, index) => (
+                  <Chip key={index} label={category} color="primary" />
+                ))}
               </Box>
 
               <Typography variant="body2" mt={2}>
