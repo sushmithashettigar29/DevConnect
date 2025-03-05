@@ -9,19 +9,18 @@ import {
   Box,
 } from "@mui/material";
 import { Link } from "react-router-dom";
-import ShareResource from "../components/ShareResource";
 
 function Resources() {
   const [resources, setResources] = useState([]);
 
-  const fetchResources = () => {
-    axios
-      .get("http://localhost:5000/api/resources")
-      .then((res) => {
-        console.log("Fetched resources:", res.data);
-        setResources(res.data);
-      })
-      .catch((err) => console.error("Error fetching resources:", err));
+  const fetchResources = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/api/resources/");
+      console.log("Fetched resources:", response.data);
+      setResources(response.data.data);
+    } catch (err) {
+      console.error("Error fetching resources:", err);
+    }
   };
 
   useEffect(() => {
@@ -33,8 +32,6 @@ function Resources() {
       <Typography variant="h4" fontWeight="bold" mb={3}>
         Resources
       </Typography>
-
-      <ShareResource onResourceUpload={fetchResources} />
 
       {resources.length === 0 ? (
         <Typography>No resources available.</Typography>
@@ -57,14 +54,15 @@ function Resources() {
                   variant="contained"
                   color="success"
                   href={`http://localhost:5000${resource.fileUrl}`}
-                  download
+                  target="_blank" // Open in a new tab
+                  download={resource.fileUrl.split("/").pop()} // Set the download filename
                 >
                   Download
                 </Button>
               </Box>
 
               <Typography variant="body2" mt={2}>
-                Uploaded by{" "}
+                Uploaded by :{" "}
                 <Link
                   to={`/profile/${resource.user._id}`}
                   style={{ color: "blue", textDecoration: "none" }}
