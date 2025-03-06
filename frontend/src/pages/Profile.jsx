@@ -31,7 +31,6 @@ const Profile = () => {
   const [modalType, setModalType] = useState("");
   const [userList, setUserList] = useState([]);
 
-  // Fetch user details and check if the current user is following the profile user
   useEffect(() => {
     if (!id) {
       navigate("/");
@@ -61,7 +60,6 @@ const Profile = () => {
     fetchUser();
   }, [id, navigate, currentUserId]);
 
-  // Handle follow/unfollow action
   const handleFollow = async () => {
     if (!currentUserId) {
       console.error("Current user ID not found in localStorage");
