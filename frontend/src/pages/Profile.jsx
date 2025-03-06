@@ -10,15 +10,26 @@ import {
   Avatar,
   Stack,
   Link,
+  Modal,
+  Box,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  IconButton,
 } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 
 const Profile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isFollowing, setIsFollowing] = useState(false); // State to track follow status
+  const [isFollowing, setIsFollowing] = useState(false);
   const currentUserId = localStorage.getItem("userId");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalType, setModalType] = useState("");
+  const [userList, setUserList] = useState([]);
 
   // Fetch user details and check if the current user is following the profile user
   useEffect(() => {
@@ -48,35 +59,141 @@ const Profile = () => {
     };
 
     fetchUser();
-  }, [id, navigate, currentUserId]); // Add currentUserId to dependency array
+  }, [id, navigate, currentUserId]);
 
   // Handle follow/unfollow action
   const handleFollow = async () => {
+    if (!currentUserId) {
+      console.error("Current user ID not found in localStorage");
+      return;
+    }
+
+    if (currentUserId === id) {
+      console.error("You cannot follow yourself.");
+      return;
+    }
+
     try {
       const endpoint = isFollowing ? `/unfollow/${id}` : `/follow/${id}`;
+
+      // Optimistically update UI
+      setIsFollowing(!isFollowing);
+      setUser((prevUser) => ({
+        ...prevUser,
+        followers: isFollowing
+          ? prevUser.followers.filter((follower) => follower !== currentUserId)
+          : [...prevUser.followers, currentUserId],
+      }));
+
+      // Send API request
       const response = await axios.post(
         `http://localhost:5000/api/users${endpoint}`,
         {},
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
           },
         }
       );
 
-      if (response.data.message) {
-        setIsFollowing(!isFollowing); // Toggle follow state
-        setUser((prevUser) => ({
-          ...prevUser,
-          followers: isFollowing
-            ? prevUser.followers.filter(
-                (follower) => follower !== currentUserId
-              )
-            : [...prevUser.followers, currentUserId],
-        }));
+      if (!response.data.success) {
+        throw new Error(response.data.message);
       }
+
+      // Refetch user data to sync with the backend
+      const updatedCurrentUserRes = await axios.get(
+        `http://localhost:5000/api/users/${currentUserId}`
+      );
+      localStorage.setItem(
+        "currentUser",
+        JSON.stringify(updatedCurrentUserRes.data)
+      );
+
+      // Ensure correct follow state
+      setIsFollowing(updatedCurrentUserRes.data.following.includes(id));
     } catch (error) {
       console.error("Error following/unfollowing user:", error);
+      setIsFollowing(!isFollowing); // Revert on failure
+    }
+  };
+
+  const handleShowList = async (type) => {
+    setModalType(type);
+    setModalOpen(true);
+
+    try {
+      const response = await axios.get(
+        `http://localhost:5000/api/users/${type}/${id}`
+      );
+
+      // Add isFollowing field to each user in the list
+      const currentUserRes = await axios.get(
+        `http://localhost:5000/api/users/${currentUserId}`
+      );
+      const currentUser = currentUserRes.data;
+
+      const updatedUserList = response.data.map((user) => ({
+        ...user,
+        isFollowing: currentUser.following.includes(user._id),
+      }));
+
+      setUserList(updatedUserList);
+      console.log("Fetched Data : ", updatedUserList);
+    } catch (error) {
+      console.error(`Error fetching ${type}`, error);
+    }
+  };
+
+  const handleFollowUnfollow = async (userId, isCurrentlyFollowing) => {
+    try {
+      const endpoint = isCurrentlyFollowing
+        ? `/unfollow/${userId}`
+        : `/follow/${userId}`;
+
+      // Optimistically update UI
+      setUserList((prevList) =>
+        prevList.map((user) =>
+          user._id === userId
+            ? { ...user, isFollowing: !isCurrentlyFollowing }
+            : user
+        )
+      );
+
+      // Send API request
+      const response = await axios.post(
+        `http://localhost:5000/api/users${endpoint}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.data.success) {
+        throw new Error(response.data.message);
+      }
+
+      // Refetch user data to sync with the backend
+      const updatedCurrentUserRes = await axios.get(
+        `http://localhost:5000/api/users/${currentUserId}`
+      );
+      localStorage.setItem(
+        "currentUser",
+        JSON.stringify(updatedCurrentUserRes.data)
+      );
+    } catch (error) {
+      console.error("Error following/unfollowing user:", error);
+      // Revert UI on failure
+      setUserList((prevList) =>
+        prevList.map((user) =>
+          user._id === userId
+            ? { ...user, isFollowing: isCurrentlyFollowing }
+            : user
+        )
+      );
     }
   };
 
@@ -101,8 +218,19 @@ const Profile = () => {
 
           <Typography variant="h4">{user?.name}</Typography>
           <Typography variant="body1">
-            Followers: {user?.followers?.length || 0} | Following:{" "}
-            {user?.following?.length || 0}
+            <span
+              style={{ cursor: "pointer", color: "blue" }}
+              onClick={() => handleShowList("followers")}
+            >
+              Followers : {user?.followers?.length || 0}
+            </span>
+            {" | "}
+            <span
+              style={{ cursor: "pointer", color: "blue" }}
+              onClick={() => handleShowList("following")}
+            >
+              Following : {user?.following?.length || 0}
+            </span>
           </Typography>
           <Typography variant="body1">Email: {user?.email}</Typography>
           {user?.bio && (
@@ -200,6 +328,78 @@ const Profile = () => {
           )}
         </Stack>
       </Paper>
+
+      <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
+        <Box
+          sx={{
+            width: 400,
+            bgcolor: "white",
+            p: 3,
+            borderRadius: 2,
+            margin: "auto",
+            mt: 10,
+          }}
+        >
+          <Stack direction="row" justifyContent="space-between">
+            <Typography variant="h6">
+              {modalType === "followers" ? "Followers" : "Following"}
+            </Typography>
+            <IconButton onClick={() => setModalOpen(false)}>
+              <CloseIcon />
+            </IconButton>
+          </Stack>
+
+          <List>
+            {userList.map((userItem) => (
+              <ListItem
+                key={userItem._id}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <ListItemAvatar>
+                  <Avatar
+                    src={
+                      `http://localhost:5000${userItem.profilePicture}` || ""
+                    }
+                  />
+                </ListItemAvatar>
+                <ListItemText
+                  primary={
+                    <span
+                      style={{
+                        color: "blue",
+                        textDecoration: "underline",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => {
+                        navigate(`/profile/${userItem._id}`);
+                        setModalOpen(false);
+                      }}
+                    >
+                      {userItem?.name}
+                    </span>
+                  }
+                />
+
+                {currentUserId !== userItem._id && (
+                  <Button
+                    variant="contained"
+                    color={userItem.isFollowing ? "secondary" : "primary"}
+                    onClick={() =>
+                      handleFollowUnfollow(userItem._id, userItem.isFollowing)
+                    }
+                  >
+                    {userItem.isFollowing ? "Unfollow" : "Follow"}
+                  </Button>
+                )}
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+      </Modal>
     </Container>
   );
 };

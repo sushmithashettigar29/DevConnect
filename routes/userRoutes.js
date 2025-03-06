@@ -26,43 +26,42 @@ const authenticate = (req, res, next) => {
 // Follow User
 router.post("/follow/:id", authenticate, async (req, res) => {
   try {
-    const { id } = req.params;
-    const userId = req.userId;
+    const { id } = req.params; // User to be followed
+    const userId = req.userId; // Current logged-in user
+
+    if (!id || !userId) {
+      return res
+        .status(400)
+        .json({ message: "Invalid request. User ID missing." });
+    }
 
     if (id === userId) {
-      return res.status(400).json({ message: "You can't follow yourself" });
+      return res.status(400).json({ message: "You cannot follow yourself." });
     }
 
     const userToFollow = await User.findById(id);
     const currentUser = await User.findById(userId);
 
     if (!userToFollow || !currentUser) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "User not found." });
     }
 
-    if (!currentUser.following.includes(id.toString())) {
-      currentUser.following.push(id);
-      userToFollow.followers.push(userId);
-
-      await currentUser.save();
-      await userToFollow.save();
-
-      const notification = new Notification({
-        user: id,
-        sender: userId,
-        type: "follow",
-      });
-      await notification.save();
-
-      res.json({ message: "User followed successfully", followed: true });
-    } else {
-      res.status(400).json({ message: "You already follow this user" });
+    if (currentUser.following.includes(id)) {
+      return res.status(400).json({ message: "Already following this user." });
     }
+
+    currentUser.following.push(id);
+    userToFollow.followers.push(userId);
+
+    await currentUser.save();
+    await userToFollow.save();
+
+    return res.json({ success: true, message: "User followed successfully." });
   } catch (error) {
-    console.error("Error following user:", error);
-    res
+    console.error("Follow error:", error);
+    return res
       .status(500)
-      .json({ message: "An error occurred while following the user" });
+      .json({ message: "Server error while following user." });
   }
 });
 
@@ -108,7 +107,7 @@ router.get("/following/:userId", async (req, res) => {
 
     const user = await User.findById(userId).populate(
       "following",
-      "username profilePicture"
+      "name profilePicture"
     );
 
     if (!user) {
@@ -118,6 +117,26 @@ router.get("/following/:userId", async (req, res) => {
     res.json(user.following);
   } catch (error) {
     console.error("Error fetching following list:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Get followers list of a user
+router.get("/followers/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId).populate(
+      "followers",
+      "name profilePicture"
+    );
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(user.followers);
+  } catch (error) {
+    console.error("Error fetching followers list : ", error);
     res.status(500).json({ message: "Server error" });
   }
 });
