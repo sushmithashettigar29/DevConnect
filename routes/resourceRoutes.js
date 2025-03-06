@@ -21,7 +21,7 @@ router.post("/upload-resource", upload.single("file"), async (req, res) => {
       user: userId,
       title,
       category: JSON.parse(category),
-      fileUrl: `/upload/${req.file.filename}`,
+      fileUrl: `/uploads/${req.file.filename}`,
     });
 
     await newResource.save();

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   TextField,
@@ -17,7 +18,7 @@ function ShareResource() {
   const [uploadStatus, setUploadStatus] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [resources, setResources] = useState([]);
-
+  const navigate = useNavigate();
   // Fetch resources on component mount
   useEffect(() => {
     getResources();
@@ -96,6 +97,7 @@ function ShareResource() {
 
       // Refresh the list of resources
       getResources();
+      navigate("/resources");
     } catch (error) {
       console.error("Upload failed:", error);
       setUploadStatus("Upload failed. Please try again.");
