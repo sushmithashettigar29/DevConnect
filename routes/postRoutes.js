@@ -43,15 +43,92 @@ router.post("/create", upload.single("image"), async (req, res) => {
 });
 
 // Get all posts
+// router.get("/all", async (req, res) => {
+//   try {
+//     const searchQuery = (req.query.search || "").trim();
+//       console.log("Search Query Received in Backend:", searchQuery);
+//     const sortOrder = req.query.sort || "newest";
+
+//     const searchFilter = searchQuery
+//       ? {
+//           $or: [
+//             { content: { $regex: searchQuery, $options: "i" } },
+//             { "user.name": { $regex: searchQuery, $options: "i" } },
+//           ],
+//         }
+//       : {};
+
+//     let sortOption = { createdAt: -1 };
+//     if (sortOrder === "oldest") {
+//       sortOption = { createdAt: 1 };
+//     }
+
+//     const posts = await Post.find(searchFilter)
+//       .populate("user", "name profilePicture")
+//       .populate("comments.user", "name profilePicture")
+//       .sort(sortOption);
+
+//     res.json(posts);
+//   } catch (error) {
+//     res.status(500).json({ message: "Error fetching posts", error });
+//   }
+// });
+
 router.get("/all", async (req, res) => {
   try {
-    const posts = await Post.find()
-      .populate("user", "name profilePicture") // Ensure profilePicture is populated
-      .populate("comments.user", "name profilePicture") // Populate profilePicture for comments
-      .sort({ createdAt: -1 });
+    const searchQuery = (req.query.search || "").trim(); // Trim search query
+    const sortOrder = req.query.sort || "newest";
 
+    console.log("Search Query Received in Backend:", searchQuery); // Debug log
+    console.log("Sort Order Received in Backend:", sortOrder); // Debug log
+
+    // Define the match stage for search
+    const matchStage = searchQuery
+      ? {
+          $or: [
+            { content: { $regex: searchQuery, $options: "i" } }, // Search in post content
+            { "user.name": { $regex: searchQuery, $options: "i" } }, // Search in user name
+          ],
+        }
+      : {};
+
+    // Define the sort stage
+    const sortStage =
+      sortOrder === "oldest" ? { createdAt: 1 } : { createdAt: -1 };
+
+    // Use aggregation to join Post and User collections
+    const posts = await Post.aggregate([
+      {
+        $lookup: {
+          from: "users", // Collection to join with (User model)
+          localField: "user", // Field in Post collection
+          foreignField: "_id", // Field in User collection
+          as: "user", // Output array field
+        },
+      },
+      { $unwind: "$user" }, // Unwind the user array (since $lookup returns an array)
+      { $match: matchStage }, // Apply the search filter
+      { $sort: sortStage }, // Apply the sort order
+      {
+        $project: {
+          content: 1,
+          image: 1,
+          likes: 1,
+          likeCount: 1,
+          comments: 1,
+          commentCount: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          "user.name": 1,
+          "user.profilePicture": 1,
+        },
+      },
+    ]);
+
+    console.log("Posts Found:", posts.length); // Debug log
     res.json(posts);
   } catch (error) {
+    console.error("Error fetching posts:", error); // Debug log
     res.status(500).json({ message: "Error fetching posts", error });
   }
 });
@@ -141,7 +218,6 @@ router.get("/comment/:postId", async (req, res) => {
   }
 });
 
-// Edit Post
 // Edit Post
 router.put("/edit/:postId", upload.single("image"), async (req, res) => {
   try {

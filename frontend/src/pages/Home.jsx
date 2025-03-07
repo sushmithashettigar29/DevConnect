@@ -16,12 +16,14 @@ import {
   IconButton,
   Menu,
   MenuItem,
+  InputAdornment,
 } from "@mui/material";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import CommentIcon from "@mui/icons-material/Comment";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import Comment from "../components/Comment";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import { FaSearch, FaFilter } from "react-icons/fa";
 
 function Home() {
   const [posts, setPosts] = useState([]);
@@ -36,13 +38,21 @@ function Home() {
   const [editedContent, setEditedContent] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [newImage, setNewImage] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState("newest");
 
   const userId = localStorage.getItem("userId");
 
   useEffect(() => {
+    console.log("Search Query Sent to Backend:", searchQuery);
     const fetchPosts = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/posts/all");
+        const res = await axios.get("http://localhost:5000/api/posts/all", {
+          params: {
+            search: searchQuery,
+            sort: sortOrder,
+          },
+        });
         if (Array.isArray(res.data)) {
           setPosts(res.data);
         } else {
@@ -71,7 +81,7 @@ function Home() {
 
     fetchPosts();
     fetchFollowing();
-  }, []);
+  }, [searchQuery, sortOrder]);
 
   const handleLike = async (postId) => {
     try {
@@ -335,6 +345,33 @@ function Home() {
 
   return (
     <Grid container spacing={2} justifyContent="center" sx={{ marginTop: 2 }}>
+      <div className="max-w-3xl max-auto mt-4 p-4">
+        <TextField
+          fullWidth
+          variant="outlined"
+          placeholder="Search posts here..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <FaSearch className="text-gray-500" />
+              </InputAdornment>
+            ),
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  onClick={() =>
+                    setSortOrder(sortOrder === "newest" ? "oldest" : "newest")
+                  }
+                >
+                  <FaFilter className="text-gray-600" />
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
+      </div>
       {posts.length > 0 ? (
         posts.map((post) => (
           <Grid item xs={12} sm={6} key={post._id}>
