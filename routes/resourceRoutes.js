@@ -39,7 +39,47 @@ router.post("/upload-resource", upload.single("file"), async (req, res) => {
 // Get all resources route
 router.get("/", async (req, res) => {
   try {
-    const resources = await Resource.find({}).populate("user", "name");
+    const searchQuery = (req.query.search || "").trim();
+    const sortOrder = req.query.sort || "newest";
+
+    const matchStage = searchQuery
+      ? {
+          $or: [
+            { title: { $regex: searchQuery, $options: "i" } },
+            { category: { $regex: searchQuery, $options: "i" } },
+            { "user.name": { $regex: searchQuery, $options: "i" } },
+          ],
+        }
+      : {};
+
+    const sortStage =
+      sortOrder === "oldest" ? { createdAt: 1 } : { createdAt: -1 };
+
+    const resources = await Resource.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      { $unwind: "$user" },
+      { $match: matchStage },
+      { $sort: sortStage },
+      {
+        $project: {
+          title: 1,
+          category: 1,
+          fileUrl: 1,
+
+          createdAt: 1,
+          "user.name": 1,
+          "user._id": 1,
+        },
+      },
+    ]);
+
     res.status(200).json({ status: "ok", data: resources });
   } catch (error) {
     console.error("Failed to fetch resources:", error);

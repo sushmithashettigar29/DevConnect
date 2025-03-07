@@ -7,16 +7,27 @@ import {
   Button,
   Chip,
   Box,
+  TextField,
+  InputAdornment,
+  IconButton,
 } from "@mui/material";
 import { Link } from "react-router-dom";
+import { FaSearch, FaFilter } from "react-icons/fa";
 
 function Resources() {
   const [resources, setResources] = useState([]);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState("newest");
 
   const fetchResources = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/resources/");
+      const response = await axios.get("http://localhost:5000/api/resources/", {
+        params: {
+          search: searchQuery,
+          sort: sortOrder,
+        },
+      });
       console.log("Fetched resources:", response.data);
       setResources(response.data.data);
     } catch (err) {
@@ -30,7 +41,7 @@ function Resources() {
       setCurrentUserId(userId);
     }
     fetchResources();
-  }, []);
+  }, [searchQuery, sortOrder]);
 
   const handleDeleteResource = async (resourceId) => {
     try {
@@ -59,6 +70,33 @@ function Resources() {
       <Typography variant="h4" fontWeight="bold" mb={3}>
         Resources
       </Typography>
+
+      <TextField
+        fullWidth
+        variant="outlined"
+        placeholder="Search by username, title, or category..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <FaSearch />
+            </InputAdornment>
+          ),
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton
+                onClick={() =>
+                  setSortOrder(sortOrder === "newest" ? "oldest" : "newest")
+                }
+              >
+                <FaFilter className="text-gray-600" />
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
+        sx={{ mb: 3 }}
+      />
 
       {resources.length === 0 ? (
         <Typography>No resources available.</Typography>

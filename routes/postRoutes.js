@@ -43,45 +43,10 @@ router.post("/create", upload.single("image"), async (req, res) => {
 });
 
 // Get all posts
-// router.get("/all", async (req, res) => {
-//   try {
-//     const searchQuery = (req.query.search || "").trim();
-//       console.log("Search Query Received in Backend:", searchQuery);
-//     const sortOrder = req.query.sort || "newest";
-
-//     const searchFilter = searchQuery
-//       ? {
-//           $or: [
-//             { content: { $regex: searchQuery, $options: "i" } },
-//             { "user.name": { $regex: searchQuery, $options: "i" } },
-//           ],
-//         }
-//       : {};
-
-//     let sortOption = { createdAt: -1 };
-//     if (sortOrder === "oldest") {
-//       sortOption = { createdAt: 1 };
-//     }
-
-//     const posts = await Post.find(searchFilter)
-//       .populate("user", "name profilePicture")
-//       .populate("comments.user", "name profilePicture")
-//       .sort(sortOption);
-
-//     res.json(posts);
-//   } catch (error) {
-//     res.status(500).json({ message: "Error fetching posts", error });
-//   }
-// });
-
 router.get("/all", async (req, res) => {
   try {
     const searchQuery = (req.query.search || "").trim(); // Trim search query
     const sortOrder = req.query.sort || "newest";
-
-    console.log("Search Query Received in Backend:", searchQuery); // Debug log
-    console.log("Sort Order Received in Backend:", sortOrder); // Debug log
-
     // Define the match stage for search
     const matchStage = searchQuery
       ? {
