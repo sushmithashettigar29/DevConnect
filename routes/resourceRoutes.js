@@ -1,6 +1,7 @@
 const express = require("express");
 const Resource = require("../models/Resource");
 const upload = require("../middleware/upload");
+const createNotification = require("../utils/notificationHelper");
 
 const router = express.Router();
 
@@ -26,6 +27,8 @@ router.post("/upload-resource", upload.single("file"), async (req, res) => {
 
     await newResource.save();
 
+    await createNotification(userId, userId, "resource", null, newResource._id);
+    
     res.status(201).json({
       message: "Resource uploaded successfully",
       resource: newResource,

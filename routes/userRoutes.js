@@ -26,9 +26,12 @@ const authenticate = (req, res, next) => {
 // Follow User
 router.post("/follow/:id", authenticate, async (req, res) => {
   try {
-    const { id } = req.params; // User to be followed
-    const userId = req.userId; // Current logged-in user
+    const { id } = req.params; // Target user ID
+    const userId = req.userId; // Logged-in user ID
 
+    console.log("🔹 Follow Request Received");
+    console.log("🔹 Target User ID:", id);
+    console.log("🔹 Authenticated User ID:", userId);
     if (!id || !userId) {
       return res
         .status(400)

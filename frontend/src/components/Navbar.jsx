@@ -1,45 +1,104 @@
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
-import { AppBar, Toolbar, Typography, Button, Box } from "@mui/material";
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  Box,
+  IconButton,
+  Badge,
+  Popper,
+  Paper,
+  ClickAwayListener,
+} from "@mui/material";
+import NotificationsIcon from "@mui/icons-material/Notifications";
+import { useState, useEffect } from "react";
+import NotificationDropdown from "./NotificationDropdown";
+import { getNotifications } from "../services/notificationService";
 
 const Navbar = ({ setAuth }) => {
   const navigate = useNavigate();
   const userId = localStorage.getItem("userId");
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [anchorEl, setAnchorEl] = useState(null); // For popper position
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const data = await getNotifications();
+        setNotifications(data);
+        setUnreadCount(data.filter((n) => !n.isRead).length);
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+      }
+    };
+    fetchNotifications();
+  }, []);
+
+  const handleMarkAsRead = () => {
+    setUnreadCount(0);
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
     setAuth(false);
     navigate("/login");
   };
+
+  // Toggle notifications dropdown
+  const handleNotificationClick = (event) => {
+    setAnchorEl(anchorEl ? null : event.currentTarget);
+  };
+
+  const handleCloseDropdown = () => {
+    setAnchorEl(null);
+  };
+
   return (
-    <AppBar position="static" sx={{ backgroundColor: "#1976d2" }}>
-      <Toolbar>
+    <AppBar position="static" sx={{ backgroundColor: "#1976d2", padding: "5px 15px" }}>
+      <Toolbar sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        
+        {/* Left - Brand Name */}
         <Typography
           variant="h6"
-          sx={{ flexGrow: 1, fontWeight: "bold", cursor: "pointer" }}
+          sx={{ fontWeight: "bold", cursor: "pointer" }}
           onClick={() => navigate("/")}
         >
           DevConnect
         </Typography>
 
-        <Box sx={{ display: "flex", gap: 2 }}>
-          <Button color="inherit" onClick={() => navigate("/")}>
-            Home
-          </Button>
-          <Button color="inherit" onClick={() => navigate("/resources")}>
-            Resources
-          </Button>
-          <Button
-            color="inherit"
-            onClick={() => navigate(`/profile/${userId}`)}
-          >
-            Profile
-          </Button>
+        {/* Middle - Navigation Links */}
+        <Box sx={{ display: "flex", gap: 3 }}>
+          <Button color="inherit" onClick={() => navigate("/")}>Home</Button>
+          <Button color="inherit" onClick={() => navigate("/resources")}>Resources</Button>
+          <Button color="inherit" onClick={() => navigate(`/profile/${userId}`)}>Profile</Button>
         </Box>
 
-        <Button color="error" onClick={handleLogout} sx={{ marginLeft: 2 }}>
-          Logout
-        </Button>
+        {/* Right - Notifications & Logout */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          
+          {/* Notification Icon with Badge */}
+          <IconButton color="inherit" onClick={handleNotificationClick}>
+            <Badge badgeContent={unreadCount} color="error">
+              <NotificationsIcon />
+            </Badge>
+          </IconButton>
+
+          {/* Notification Dropdown */}
+          <Popper open={Boolean(anchorEl)} anchorEl={anchorEl} placement="bottom-end">
+            <ClickAwayListener onClickAway={handleCloseDropdown}>
+              <Paper sx={{ width: 300, maxHeight: 400, overflowY: "auto" }}>
+                <NotificationDropdown notifications={notifications} handleClose={handleCloseDropdown} />
+              </Paper>
+            </ClickAwayListener>
+          </Popper>
+
+          {/* Logout Button */}
+          <Button color="error" onClick={handleLogout}>Logout</Button>
+        </Box>
       </Toolbar>
     </AppBar>
   );
@@ -48,4 +107,5 @@ const Navbar = ({ setAuth }) => {
 Navbar.propTypes = {
   setAuth: PropTypes.func.isRequired,
 };
+
 export default Navbar;

@@ -109,17 +109,29 @@ function Home() {
   };
 
   const handleFollow = async (followerUserId) => {
+    const token = localStorage.getItem("token");
+
+    console.log("🔹 Attempting to follow user:", followerUserId);
+    console.log("🔹 Token being sent:", token);
+
+    if (!token) {
+      console.error("🚨 No token found in localStorage!");
+      return;
+    }
+
     try {
-      await axios.post(
+      const response = await axios.post(
         `http://localhost:5000/api/users/follow/${followerUserId}`,
         {},
         {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
+
+      console.log("✅ Follow success:", response.data);
       setFollowing((prev) => new Set([...Array.from(prev), followerUserId]));
     } catch (error) {
-      console.error("Error following user", error);
+      console.error("🚨 Error following user:", error.response?.data || error);
     }
   };
 
@@ -409,11 +421,11 @@ function Home() {
                   {post.user._id !== userId ? (
                     following.has(post.user._id) ? (
                       <Button
-                        variant="outlined"
-                        color="primary"
+                        variant="contained"
+                        color="secondary"
                         onClick={() => handleUnfollow(post.user._id)}
                       >
-                        Following
+                        Unfollow
                       </Button>
                     ) : (
                       <Button
@@ -425,13 +437,13 @@ function Home() {
                       </Button>
                     )
                   ) : (
-                    // If the user is the post owner, show three-dot menu
                     <IconButton
                       onClick={(event) => handleMenuOpen(event, post._id)}
                     >
                       <MoreVertIcon />
                     </IconButton>
                   )}
+
                   <Menu
                     anchorEl={anchorEl}
                     open={Boolean(anchorEl)}

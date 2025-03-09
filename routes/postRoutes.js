@@ -4,6 +4,7 @@ const path = require("path");
 const Post = require("../models/Post");
 const Notification = require("../models/Notification");
 const mongoose = require("mongoose");
+const createNotification = require("../utils/notificationHelper");
 
 const router = express.Router();
 
@@ -47,7 +48,7 @@ router.get("/all", async (req, res) => {
   try {
     const searchQuery = (req.query.search || "").trim(); // Trim search query
     const sortOrder = req.query.sort || "newest";
-    // Define the match stage for search
+
     const matchStage = searchQuery
       ? {
           $or: [
@@ -57,15 +58,13 @@ router.get("/all", async (req, res) => {
         }
       : {};
 
-    // Define the sort stage
     const sortStage =
       sortOrder === "oldest" ? { createdAt: 1 } : { createdAt: -1 };
 
-    // Use aggregation to join Post and User collections
     const posts = await Post.aggregate([
       {
         $lookup: {
-          from: "users", // Collection to join with (User model)
+          from: "users", 
           localField: "user", // Field in Post collection
           foreignField: "_id", // Field in User collection
           as: "user", // Output array field
@@ -86,6 +85,7 @@ router.get("/all", async (req, res) => {
           updatedAt: 1,
           "user.name": 1,
           "user.profilePicture": 1,
+          "user._id": 1,
         },
       },
     ]);
@@ -115,7 +115,11 @@ router.post("/like", async (req, res) => {
     } else {
       // Like the post
       post.likes.push(userId);
-      post.likeCount = post.likes.length; // Update likeCount
+      post.likeCount = post.likes.length;
+
+      if(post.user.toString() !== userId){
+        await createNotification(post.user, userId, "like", postId);
+      }
     }
 
     await post.save(); // Save changes to DB
