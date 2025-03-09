@@ -2,7 +2,6 @@ import axios from "axios";
 
 const API_URL = "http://localhost:5000/api/notifications";
 
-// Fetch notifications for the current user
 export const getNotifications = async () => {
   try {
     const response = await axios.get(
@@ -20,7 +19,6 @@ export const getNotifications = async () => {
   }
 };
 
-// Mark all notifications as read
 export const markNotificationsAsRead = async () => {
   try {
     const userId = localStorage.getItem("userId");

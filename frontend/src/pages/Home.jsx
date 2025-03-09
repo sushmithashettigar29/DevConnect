@@ -89,19 +89,16 @@ function Home() {
         userId,
         postId,
       });
-  
-      console.log("Backend Response:", res.data); // Debugging
-  
-      // Update the posts state
+
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
           post._id === postId
             ? {
                 ...post,
                 likes: res.data.liked
-                  ? [...post.likes, userId] // Add user to likes
-                  : post.likes.filter((id) => id !== userId), // Remove user from likes
-                likeCount: res.data.likeCount, // Update like count
+                  ? [...post.likes, userId]
+                  : post.likes.filter((id) => id !== userId),
+                likeCount: res.data.likeCount,
               }
             : post
         )
@@ -210,12 +207,10 @@ function Home() {
         }
       );
 
-      // Remove the deleted comment from UI
       setComments((prevComments) =>
         prevComments.filter((c) => c._id !== commentId)
       );
 
-      // Update comment count on post
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
           post._id === selectedPostId
@@ -235,19 +230,17 @@ function Home() {
         { userId, text: replyText }
       );
 
-      // Update the UI with the new reply
       setComments((prevComments) =>
         prevComments.map((comment) =>
           comment._id === commentId
             ? {
                 ...comment,
-                replies: [...(comment.replies || []), res.data.reply], // Append new reply
+                replies: [...(comment.replies || []), res.data.reply],
               }
             : comment
         )
       );
 
-      // Update the comment count in the posts list
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
           post._id === selectedPostId
@@ -289,7 +282,6 @@ function Home() {
       formData.append("userId", userId);
       formData.append("content", editedContent);
 
-      // Find the selected post from the `posts` state
       const selectedPost = posts.find(
         (post) => post._id === selectedPostIdForMenu
       );
@@ -300,9 +292,9 @@ function Home() {
       }
 
       if (newImage) {
-        formData.append("image", newImage); // Add new image if uploaded
+        formData.append("image", newImage);
       } else if (!newImage && selectedPost.image) {
-        formData.append("deleteImage", "true"); // Flag to delete existing image
+        formData.append("deleteImage", "true");
       }
 
       const res = await axios.put(
@@ -310,12 +302,11 @@ function Home() {
         formData,
         {
           headers: {
-            "Content-Type": "multipart/form-data", // Important for file uploads
+            "Content-Type": "multipart/form-data",
           },
         }
       );
 
-      // Update the posts state with the edited post
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
           post._id === selectedPostIdForMenu
@@ -484,7 +475,7 @@ function Home() {
                           <Button
                             variant="outlined"
                             color="error"
-                            onClick={() => setNewImage(null)} // Clear the image
+                            onClick={() => setNewImage(null)}
                             sx={{ marginBottom: 2 }}
                           >
                             Delete Image
@@ -560,9 +551,9 @@ function Home() {
                     <Button
                       startIcon={
                         post.likes.includes(userId) ? (
-                          <FavoriteIcon color="error" /> // Filled red heart if liked
+                          <FavoriteIcon color="error" />
                         ) : (
-                          <FavoriteBorderIcon /> // Outlined heart if not liked
+                          <FavoriteBorderIcon />
                         )
                       }
                       onClick={() => handleLike(post._id)}
@@ -615,8 +606,8 @@ function Home() {
                 onDelete={handleDeleteComment}
                 onReply={handleReplyComment}
                 selectedPostId={selectedPostId}
-                setComments={setComments} // Pass setComments
-                setPosts={setPosts} // Pass setPosts
+                setComments={setComments}
+                setPosts={setPosts}
               />
             ))
           ) : (
@@ -628,7 +619,7 @@ function Home() {
             variant="outlined"
             placeholder="Write a comment..."
             value={newComment}
-            onChange={(e) => setNewComment(e.target.value)} // Corrected here
+            onChange={(e) => setNewComment(e.target.value)}
             sx={{ marginTop: 2 }}
           />
         </DialogContent>

@@ -21,10 +21,10 @@ const EditProfile = () => {
     linkedin: "",
     instagram: "",
     github: "",
-    profilePicture: "", // Stores profile picture URL
+    profilePicture: "",
   });
 
-  const [profilePictureFile, setProfilePictureFile] = useState(null); // Stores file object
+  const [profilePictureFile, setProfilePictureFile] = useState(null);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -45,8 +45,8 @@ const EditProfile = () => {
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      setProfilePictureFile(file); // Update state with the selected file
-      await uploadProfilePicture(file); // Automatically upload the file
+      setProfilePictureFile(file);
+      await uploadProfilePicture(file);
     }
   };
 
@@ -60,16 +60,16 @@ const EditProfile = () => {
       const formData = new FormData();
       formData.append("profilePicture", file);
 
-      const token = localStorage.getItem("token"); // Retrieve token from localStorage
+      const token = localStorage.getItem("token");
       const res = await axios.post(
         "http://localhost:5000/api/profile/upload-profile-picture",
         formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`, // Send token in headers
+            Authorization: `Bearer ${token}`,
           },
-          withCredentials: true, // Ensure cookies are sent
+          withCredentials: true,
         }
       );
 
@@ -88,14 +88,14 @@ const EditProfile = () => {
         const formData = new FormData();
         formData.append("profilePicture", profilePictureFile);
 
-        const token = localStorage.getItem("token"); // Retrieve token from localStorage
+        const token = localStorage.getItem("token");
         const uploadRes = await axios.post(
           "http://localhost:5000/api/profile/upload-profile-picture",
           formData,
           {
             headers: {
               "Content-Type": "multipart/form-data",
-              Authorization: `Bearer ${token}`, // Send token in headers
+              Authorization: `Bearer ${token}`,
             },
             withCredentials: true,
           }
@@ -106,11 +106,11 @@ const EditProfile = () => {
         });
       }
 
-      const token = localStorage.getItem("token"); // Retrieve token from localStorage
+      const token = localStorage.getItem("token");
       await axios.put(`http://localhost:5000/api/profile/${id}`, userData, {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // Send token in headers
+          Authorization: `Bearer ${token}`,
         },
         withCredentials: true,
       });
@@ -157,7 +157,6 @@ const EditProfile = () => {
             rows={3}
           />
 
-          {/* Gender Selection */}
           <TextField
             select
             label="Gender"
@@ -172,7 +171,6 @@ const EditProfile = () => {
             <MenuItem value="Other">Other</MenuItem>
           </TextField>
 
-          {/* Profile Picture Upload */}
           <Typography variant="subtitle1" sx={{ marginTop: 2 }}>
             Profile Picture
           </Typography>

@@ -19,16 +19,14 @@ function ShareResource() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [resources, setResources] = useState([]);
   const navigate = useNavigate();
-  // Fetch resources on component mount
+
   useEffect(() => {
     getResources();
   }, []);
 
   const getResources = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:5000/api/resources/"
-      );
+      const response = await axios.get("http://localhost:5000/api/resources/");
       setResources(response.data.data);
     } catch (error) {
       console.error("Failed to fetch resources:", error);
@@ -55,7 +53,6 @@ function ShareResource() {
     setUploadStatus("Submitting resource...");
     setUploadProgress(0);
 
-    // Validate form inputs
     if (!title || category.length === 0 || !file) {
       setUploadStatus("Please fill all fields and upload a file.");
       return;
@@ -67,10 +64,9 @@ function ShareResource() {
       return;
     }
 
-    // Prepare form data
     const formData = new FormData();
     formData.append("title", title);
-    formData.append("category", JSON.stringify(category)); // Send categories as JSON
+    formData.append("category", JSON.stringify(category));
     formData.append("file", file);
     formData.append("userId", userId);
 
@@ -95,7 +91,6 @@ function ShareResource() {
       setFile(null);
       setUploadProgress(0);
 
-      // Refresh the list of resources
       getResources();
       navigate("/resources");
     } catch (error) {

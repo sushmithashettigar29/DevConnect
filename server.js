@@ -20,14 +20,11 @@ const io = new Server(server, {
   },
 });
 
-// Track online users
 let onlineUsers = new Map();
 
-// Make io and onlineUsers accessible in routes
 app.set("io", io);
 app.set("onlineUsers", onlineUsers);
 
-// Middleware
 app.use(express.json());
 app.use(
   cors({
@@ -49,14 +46,12 @@ app.use("/api/messages", require("./routes/messages"));
 app.use(
   "/api/notifications",
   require("./routes/notifications")(io, onlineUsers)
-); // Pass io and onlineUsers
+);
 
-// Home route
 app.get("/", (req, res) => {
   res.send("API is running...");
 });
 
-// Socket.IO logic
 io.on("connection", (socket) => {
   console.log("User connected : ", socket.id);
 
@@ -100,7 +95,6 @@ io.on("connection", (socket) => {
   });
 });
 
-// Error handling middleware
 app.use((err, req, res, next) => {
   console.error("Error:", err);
   if (res.headersSent) {
@@ -111,7 +105,6 @@ app.use((err, req, res, next) => {
     .json({ message: "Internal Server Error", error: err.message });
 });
 
-// Start server
 server.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });

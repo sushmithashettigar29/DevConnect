@@ -10,10 +10,9 @@ const createNotification = async (user, sender, type, post, onlineUsers) => {
     });
     await notification.save();
 
-    // Emit real-time notification to the post owner
     const receiverSocketId = onlineUsers.get(user.toString());
     if (receiverSocketId) {
-      const io = require("../server").io; // Import the Socket.IO instance
+      const io = require("../server").io;
       io.to(receiverSocketId).emit("receive-notification", notification);
     }
   } catch (error) {

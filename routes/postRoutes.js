@@ -46,14 +46,14 @@ router.post("/create", upload.single("image"), async (req, res) => {
 // Get all posts
 router.get("/all", async (req, res) => {
   try {
-    const searchQuery = (req.query.search || "").trim(); // Trim search query
+    const searchQuery = (req.query.search || "").trim();
     const sortOrder = req.query.sort || "newest";
 
     const matchStage = searchQuery
       ? {
           $or: [
-            { content: { $regex: searchQuery, $options: "i" } }, // Search in post content
-            { "user.name": { $regex: searchQuery, $options: "i" } }, // Search in user name
+            { content: { $regex: searchQuery, $options: "i" } },
+            { "user.name": { $regex: searchQuery, $options: "i" } },
           ],
         }
       : {};
@@ -65,14 +65,14 @@ router.get("/all", async (req, res) => {
       {
         $lookup: {
           from: "users",
-          localField: "user", // Field in Post collection
-          foreignField: "_id", // Field in User collection
-          as: "user", // Output array field
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
         },
       },
-      { $unwind: "$user" }, // Unwind the user array (since $lookup returns an array)
-      { $match: matchStage }, // Apply the search filter
-      { $sort: sortStage }, // Apply the sort order
+      { $unwind: "$user" },
+      { $match: matchStage },
+      { $sort: sortStage },
       {
         $project: {
           content: 1,
@@ -90,10 +90,10 @@ router.get("/all", async (req, res) => {
       },
     ]);
 
-    console.log("Posts Found:", posts.length); // Debug log
+    console.log("Posts Found:", posts.length);
     res.json(posts);
   } catch (error) {
-    console.error("Error fetching posts:", error); // Debug log
+    console.error("Error fetching posts:", error);
     res.status(500).json({ message: "Error fetching posts", error });
   }
 });
@@ -103,48 +103,49 @@ router.post("/like", async (req, res) => {
   try {
     const { userId, postId } = req.body;
 
-    // Validate request body
     if (!userId || !postId) {
-      return res.status(400).json({ message: "userId and postId are required" });
+      return res
+        .status(400)
+        .json({ message: "userId and postId are required" });
     }
 
-    // Find the post
     const post = await Post.findById(postId);
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    // Check if the user has already liked the post
     const hasLiked = post.likes.includes(userId);
 
     if (hasLiked) {
-      // Unlike the post
       post.likes = post.likes.filter((id) => id.toString() !== userId);
     } else {
-      // Like the post
       post.likes.push(userId);
 
-      // Create a notification if the post owner is not the same as the user
       if (post.user.toString() !== userId) {
-        await createNotification(post.user, userId, "like", postId, req.app.get("onlineUsers"));
+        await createNotification(
+          post.user,
+          userId,
+          "like",
+          postId,
+          req.app.get("onlineUsers")
+        );
       }
     }
 
-    // Update the like count
     post.likeCount = post.likes.length;
 
-    // Save the updated post
     await post.save();
 
-    // Return the response
     return res.json({
       message: hasLiked ? "Post unliked" : "Post liked",
-      liked: !hasLiked, // Indicates whether the post is now liked or unliked
-      likeCount: post.likeCount, // Updated like count
+      liked: !hasLiked,
+      likeCount: post.likeCount,
     });
   } catch (error) {
     console.error("Error in like route:", error);
-    res.status(500).json({ message: "Error liking post", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error liking post", error: error.message });
   }
 });
 
@@ -185,8 +186,8 @@ router.get("/comment/:postId", async (req, res) => {
   try {
     const { postId } = req.params;
     const post = await Post.findById(postId)
-      .populate("comments.user", "name profilePicture") // Populate profilePicture for comments
-      .populate("comments.replies.user", "name profilePicture"); // Populate profilePicture for replies
+      .populate("comments.user", "name profilePicture")
+      .populate("comments.replies.user", "name profilePicture");
 
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
@@ -216,10 +217,8 @@ router.put("/edit/:postId", upload.single("image"), async (req, res) => {
 
     if (content) post.content = content;
 
-    // Handle image deletion
     if (deleteImage === "true") {
       if (post.image) {
-        // Delete the image file from the server (optional)
         const fs = require("fs");
         const path = require("path");
         const imagePath = path.join(__dirname, "..", post.image);
@@ -227,9 +226,9 @@ router.put("/edit/:postId", upload.single("image"), async (req, res) => {
           fs.unlinkSync(imagePath);
         }
       }
-      post.image = null; // Remove the image reference from the post
+      post.image = null;
     } else if (image) {
-      post.image = image; // Update image if a new one is uploaded
+      post.image = image;
     }
 
     await post.save();
@@ -276,7 +275,6 @@ router.delete("/comment/:postId/:commentId", async (req, res) => {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    // Find the comment to delete
     const commentIndex = post.comments.findIndex(
       (comment) => comment._id.toString() === commentId
     );
@@ -285,7 +283,6 @@ router.delete("/comment/:postId/:commentId", async (req, res) => {
       return res.status(404).json({ message: "Comment not found" });
     }
 
-    // Check if the user is authorized to delete the comment
     const isCommentAuthor =
       post.comments[commentIndex].user.toString() === userId;
     const isPostOwner = post.user.toString() === userId;
@@ -294,9 +291,8 @@ router.delete("/comment/:postId/:commentId", async (req, res) => {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
-    // Remove the comment from the array
     post.comments.splice(commentIndex, 1);
-    post.commentCount = post.comments.length; // Update comment count
+    post.commentCount = post.comments.length;
     await post.save();
 
     res.status(200).json({ message: "Comment deleted successfully", post });
@@ -316,7 +312,6 @@ router.post("/comment/:postId/:commentId/reply", async (req, res) => {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    // Find the parent comment
     const parentComment = post.comments.find(
       (comment) => comment._id.toString() === commentId
     );
@@ -325,23 +320,17 @@ router.post("/comment/:postId/:commentId/reply", async (req, res) => {
       return res.status(404).json({ message: "Parent comment not found" });
     }
 
-    // Create the reply
     const newReply = {
-      user: new mongoose.Types.ObjectId(userId), // Ensure ObjectId format
+      user: new mongoose.Types.ObjectId(userId),
       text,
       createdAt: new Date(),
     };
 
-    // Add reply inside the replies array
     if (!parentComment.replies) {
       parentComment.replies = [];
     }
     parentComment.replies.push(newReply);
-
-    // Increment the comment count
     post.commentCount += 1;
-
-    // Save the updated post with the new reply
     await post.save();
 
     res.status(201).json({
@@ -367,7 +356,6 @@ router.delete(
         return res.status(404).json({ message: "Post not found" });
       }
 
-      // Find the parent comment
       const parentComment = post.comments.find(
         (comment) => comment._id.toString() === commentId
       );
@@ -376,7 +364,6 @@ router.delete(
         return res.status(404).json({ message: "Parent comment not found" });
       }
 
-      // Find the reply to delete
       const replyIndex = parentComment.replies.findIndex(
         (reply) => reply._id.toString() === replyId
       );
@@ -385,18 +372,12 @@ router.delete(
         return res.status(404).json({ message: "Reply not found" });
       }
 
-      // Check if the user is authorized to delete the reply
       if (parentComment.replies[replyIndex].user.toString() !== userId) {
         return res.status(403).json({ message: "Unauthorized" });
       }
 
-      // Remove the reply from the array
       parentComment.replies.splice(replyIndex, 1);
-
-      // Decrement the comment count
       post.commentCount -= 1;
-
-      // Save the updated post
       await post.save();
 
       res.status(200).json({ message: "Reply deleted successfully", post });

@@ -42,7 +42,6 @@ const Profile = () => {
         const res = await axios.get(`http://localhost:5000/api/profile/${id}`);
         setUser(res.data.user);
 
-        // Check if the current user is following the profile user
         if (currentUserId) {
           const currentUserRes = await axios.get(
             `http://localhost:5000/api/users/${currentUserId}`
@@ -74,7 +73,6 @@ const Profile = () => {
     try {
       const endpoint = isFollowing ? `/unfollow/${id}` : `/follow/${id}`;
 
-      // Optimistically update UI
       setIsFollowing(!isFollowing);
       setUser((prevUser) => ({
         ...prevUser,
@@ -83,7 +81,6 @@ const Profile = () => {
           : [...prevUser.followers, currentUserId],
       }));
 
-      // Send API request
       const response = await axios.post(
         `http://localhost:5000/api/users${endpoint}`,
         {},
@@ -99,7 +96,6 @@ const Profile = () => {
         throw new Error(response.data.message);
       }
 
-      // Refetch user data to sync with the backend
       const updatedCurrentUserRes = await axios.get(
         `http://localhost:5000/api/users/${currentUserId}`
       );
@@ -108,11 +104,10 @@ const Profile = () => {
         JSON.stringify(updatedCurrentUserRes.data)
       );
 
-      // Ensure correct follow state
       setIsFollowing(updatedCurrentUserRes.data.following.includes(id));
     } catch (error) {
       console.error("Error following/unfollowing user:", error);
-      setIsFollowing(!isFollowing); // Revert on failure
+      setIsFollowing(!isFollowing);
     }
   };
 
@@ -125,7 +120,6 @@ const Profile = () => {
         `http://localhost:5000/api/users/${type}/${id}`
       );
 
-      // Add isFollowing field to each user in the list
       const currentUserRes = await axios.get(
         `http://localhost:5000/api/users/${currentUserId}`
       );
@@ -149,7 +143,6 @@ const Profile = () => {
         ? `/unfollow/${userId}`
         : `/follow/${userId}`;
 
-      // Optimistically update UI
       setUserList((prevList) =>
         prevList.map((user) =>
           user._id === userId
@@ -158,7 +151,6 @@ const Profile = () => {
         )
       );
 
-      // Send API request
       const response = await axios.post(
         `http://localhost:5000/api/users${endpoint}`,
         {},
@@ -174,7 +166,6 @@ const Profile = () => {
         throw new Error(response.data.message);
       }
 
-      // Refetch user data to sync with the backend
       const updatedCurrentUserRes = await axios.get(
         `http://localhost:5000/api/users/${currentUserId}`
       );
@@ -184,7 +175,6 @@ const Profile = () => {
       );
     } catch (error) {
       console.error("Error following/unfollowing user:", error);
-      // Revert UI on failure
       setUserList((prevList) =>
         prevList.map((user) =>
           user._id === userId
@@ -274,7 +264,6 @@ const Profile = () => {
             )}
           </Stack>
 
-          {/* Follow/Unfollow Button */}
           {currentUserId !== id && (
             <Button
               variant="contained"
@@ -286,7 +275,6 @@ const Profile = () => {
             </Button>
           )}
 
-          {/* Message Button (Placeholder for now) */}
           {currentUserId !== id && (
             <Button
               variant="contained"
@@ -298,7 +286,6 @@ const Profile = () => {
             </Button>
           )}
 
-          {/* Show buttons only if the current user is viewing their own profile */}
           {currentUserId === id && (
             <Stack direction="column" spacing={2} sx={{ marginTop: 2 }}>
               <Button

@@ -112,9 +112,9 @@ function Resources() {
                 <Button
                   variant="contained"
                   color="success"
-                  href={`http://localhost:5000${resource.fileUrl}`} // Use the fileUrl directly
-                  target="_blank" // Open in a new tab
-                  download={resource.fileUrl.split("/").pop()} // Set the download filename
+                  href={`http://localhost:5000${resource.fileUrl}`}
+                  target="_blank"
+                  download={resource.fileUrl.split("/").pop()}
                 >
                   Download
                 </Button>

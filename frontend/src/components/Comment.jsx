@@ -20,25 +20,25 @@ const Comment = ({
   onDelete,
   onReply,
   selectedPostId,
-  setComments, // Add setComments prop
-  setPosts, // Add setPosts prop
+  setComments,
+  setPosts,
 }) => {
   const [anchorEl, setAnchorEl] = useState(null);
-  const [replyAnchorEl, setReplyAnchorEl] = useState(null); // For reply menu
+  const [replyAnchorEl, setReplyAnchorEl] = useState(null);
   const [showReplyInput, setShowReplyInput] = useState(false);
   const [replyText, setReplyText] = useState("");
-  const [selectedReplyId, setSelectedReplyId] = useState(null); // Track which reply is selected
+  const [selectedReplyId, setSelectedReplyId] = useState(null);
 
   const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
 
   const handleReplyMenuOpen = (event, replyId) => {
     setReplyAnchorEl(event.currentTarget);
-    setSelectedReplyId(replyId); // Set the selected reply ID
+    setSelectedReplyId(replyId);
   };
   const handleReplyMenuClose = () => {
     setReplyAnchorEl(null);
-    setSelectedReplyId(null); // Reset the selected reply ID
+    setSelectedReplyId(null);
   };
 
   const canDelete = userId === comment.user._id || userId === postOwnerId;
@@ -57,7 +57,6 @@ const Comment = ({
         { data: { userId } }
       );
 
-      // Remove the deleted reply from the UI
       setComments((prevComments) =>
         prevComments.map((c) =>
           c._id === comment._id
@@ -69,7 +68,6 @@ const Comment = ({
         )
       );
 
-      // Update the comment count on the post
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
           post._id === selectedPostId
@@ -101,7 +99,6 @@ const Comment = ({
           {moment(comment.createdAt).fromNow()}
         </Typography>
 
-        {/* Three-dot menu for Delete & Reply (for top-level comment) */}
         <IconButton size="small" onClick={handleMenuOpen}>
           <MoreVertIcon />
         </IconButton>
@@ -135,7 +132,6 @@ const Comment = ({
         {comment.text}
       </Typography>
 
-      {/* Display existing replies */}
       {comment.replies &&
         comment.replies.map((reply) => (
           <Box key={reply._id} sx={{ marginLeft: 6, mt: 1 }}>
@@ -154,7 +150,6 @@ const Comment = ({
                 {reply.user.name}: {reply.text}
               </Typography>
 
-              {/* Three-dot menu for Delete & Reply (for replies) */}
               <IconButton
                 size="small"
                 onClick={(e) => handleReplyMenuOpen(e, reply._id)}
@@ -189,7 +184,6 @@ const Comment = ({
           </Box>
         ))}
 
-      {/* Reply Input */}
       {showReplyInput && (
         <Box sx={{ marginLeft: 6, mt: 1 }}>
           <TextField

@@ -31,7 +31,6 @@ module.exports = (io, onlineUsers) => {
         { $set: { isRead: true } }
       );
 
-      // Emit real-time update to user
       const userSocketId = onlineUsers.get(userId);
       if (userSocketId) {
         io.to(userSocketId).emit("notifications-read");
