@@ -2,16 +2,35 @@ import axios from "axios";
 
 const API_URL = "http://localhost:5000/api/notifications";
 
+// Fetch notifications for the current user
 export const getNotifications = async () => {
-  const response = await axios.get(
-    `${API_URL}/${localStorage.getItem("userId")}`
-  );
-  return response.data;
+  try {
+    const response = await axios.get(
+      `${API_URL}/${localStorage.getItem("userId")}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching notifications:", error);
+    throw error;
+  }
 };
 
+// Mark all notifications as read
 export const markNotificationsAsRead = async () => {
-  const response = await axios.put(
-    `${API_URL}/mark-as-read/${localStorage.getItem("userId")}`
-  );
-  return response.data;
+  try {
+    const userId = localStorage.getItem("userId");
+    await axios.put(`${API_URL}/mark-as-read/${userId}`, null, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+  } catch (error) {
+    console.error("Error marking notifications as read:", error);
+    throw error;
+  }
 };

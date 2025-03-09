@@ -2,7 +2,7 @@ const express = require("express");
 const Notification = require("../models/Notification");
 const authenticate = require("../middleware/authenticate");
 
-module.exports = (io) => {
+module.exports = (io, onlineUsers) => {
   const router = express.Router();
 
   // Get user notifications

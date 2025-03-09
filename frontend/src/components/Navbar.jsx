@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import PropTypes from "prop-types";
 import {
   AppBar,
   Toolbar,
@@ -22,7 +21,7 @@ const Navbar = ({ setAuth }) => {
   const userId = localStorage.getItem("userId");
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [anchorEl, setAnchorEl] = useState(null); // For popper position
+  const [anchorEl, setAnchorEl] = useState(null);
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -48,7 +47,6 @@ const Navbar = ({ setAuth }) => {
     navigate("/login");
   };
 
-  // Toggle notifications dropdown
   const handleNotificationClick = (event) => {
     setAnchorEl(anchorEl ? null : event.currentTarget);
   };
@@ -58,54 +56,59 @@ const Navbar = ({ setAuth }) => {
   };
 
   return (
-    <AppBar position="static" sx={{ backgroundColor: "#1976d2", padding: "5px 15px" }}>
-      <Toolbar sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        
-        {/* Left - Brand Name */}
+    <AppBar position="static" sx={{ backgroundColor: "#1976d2" }}>
+      <Toolbar>
         <Typography
           variant="h6"
-          sx={{ fontWeight: "bold", cursor: "pointer" }}
+          sx={{ flexGrow: 1, fontWeight: "bold", cursor: "pointer" }}
           onClick={() => navigate("/")}
         >
           DevConnect
         </Typography>
 
-        {/* Middle - Navigation Links */}
-        <Box sx={{ display: "flex", gap: 3 }}>
-          <Button color="inherit" onClick={() => navigate("/")}>Home</Button>
-          <Button color="inherit" onClick={() => navigate("/resources")}>Resources</Button>
-          <Button color="inherit" onClick={() => navigate(`/profile/${userId}`)}>Profile</Button>
+        <Box sx={{ display: "flex", gap: 2 }}>
+          <Button color="inherit" onClick={() => navigate("/")}>
+            Home
+          </Button>
+          <Button color="inherit" onClick={() => navigate("/resources")}>
+            Resources
+          </Button>
+          <Button
+            color="inherit"
+            onClick={() => navigate(`/profile/${userId}`)}
+          >
+            Profile
+          </Button>
         </Box>
 
-        {/* Right - Notifications & Logout */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          
-          {/* Notification Icon with Badge */}
-          <IconButton color="inherit" onClick={handleNotificationClick}>
-            <Badge badgeContent={unreadCount} color="error">
-              <NotificationsIcon />
-            </Badge>
-          </IconButton>
+        <IconButton color="inherit" onClick={handleNotificationClick}>
+          <Badge badgeContent={unreadCount} color="error">
+            <NotificationsIcon />
+          </Badge>
+        </IconButton>
 
-          {/* Notification Dropdown */}
-          <Popper open={Boolean(anchorEl)} anchorEl={anchorEl} placement="bottom-end">
-            <ClickAwayListener onClickAway={handleCloseDropdown}>
-              <Paper sx={{ width: 300, maxHeight: 400, overflowY: "auto" }}>
-                <NotificationDropdown notifications={notifications} handleClose={handleCloseDropdown} />
-              </Paper>
-            </ClickAwayListener>
-          </Popper>
+        <Popper
+          open={Boolean(anchorEl)}
+          anchorEl={anchorEl}
+          placement="bottom-end"
+        >
+          <ClickAwayListener onClickAway={handleCloseDropdown}>
+            <Paper sx={{ width: 300, maxHeight: 400, overflowY: "auto" }}>
+              <NotificationDropdown
+                notifications={notifications}
+                onMarkAsRead={handleMarkAsRead}
+              />
+            </Paper>
+          </ClickAwayListener>
+        </Popper>
 
-          {/* Logout Button */}
-          <Button color="error" onClick={handleLogout}>Logout</Button>
-        </Box>
+        <Button color="error" onClick={handleLogout}>
+          Logout
+        </Button>
       </Toolbar>
     </AppBar>
   );
 };
 
-Navbar.propTypes = {
-  setAuth: PropTypes.func.isRequired,
-};
 
 export default Navbar;

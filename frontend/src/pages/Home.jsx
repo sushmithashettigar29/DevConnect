@@ -89,7 +89,10 @@ function Home() {
         userId,
         postId,
       });
-
+  
+      console.log("Backend Response:", res.data); // Debugging
+  
+      // Update the posts state
       setPosts((prevPosts) =>
         prevPosts.map((post) =>
           post._id === postId
@@ -98,7 +101,7 @@ function Home() {
                 likes: res.data.liked
                   ? [...post.likes, userId] // Add user to likes
                   : post.likes.filter((id) => id !== userId), // Remove user from likes
-                likeCount: res.data.likeCount, // ✅ Update the like count from backend
+                likeCount: res.data.likeCount, // Update like count
               }
             : post
         )

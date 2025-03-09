@@ -22,11 +22,11 @@ const NotificationDropdown = ({ notifications, onMarkAsRead }) => {
   const handleMarkAsRead = async () => {
     await markNotificationsAsRead();
     onMarkAsRead();
+    setUnreadCount(0);
   };
 
   return (
     <Box sx={{ width: 300, padding: 2 }}>
-      {/* Notifications Header */}
       <Box
         sx={{
           display: "flex",
@@ -40,7 +40,6 @@ const NotificationDropdown = ({ notifications, onMarkAsRead }) => {
         </IconButton>
       </Box>
 
-      {/* Notification List */}
       <List>
         {notifications.map((notification) => (
           <ListItem key={notification._id}>

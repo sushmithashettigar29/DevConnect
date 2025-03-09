@@ -1,25 +1,23 @@
 const Notification = require("../models/Notification");
 
-const createNotification = async (
-  userId,
-  senderId,
-  type,
-  postId = null,
-  resourceId = null
-) => {
+const createNotification = async (user, sender, type, post, onlineUsers) => {
   try {
     const notification = new Notification({
-      user: userId,
-      sender: senderId,
+      user,
+      sender,
       type,
-      post: postId,
-      resource: resourceId,
+      post,
     });
     await notification.save();
-    return notification;
+
+    // Emit real-time notification to the post owner
+    const receiverSocketId = onlineUsers.get(user.toString());
+    if (receiverSocketId) {
+      const io = require("../server").io; // Import the Socket.IO instance
+      io.to(receiverSocketId).emit("receive-notification", notification);
+    }
   } catch (error) {
-    console.log("Error creating notification : ", error);
-    throw error;
+    console.error("Error creating notification:", error);
   }
 };
 

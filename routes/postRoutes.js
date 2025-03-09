@@ -64,7 +64,7 @@ router.get("/all", async (req, res) => {
     const posts = await Post.aggregate([
       {
         $lookup: {
-          from: "users", 
+          from: "users",
           localField: "user", // Field in Post collection
           foreignField: "_id", // Field in User collection
           as: "user", // Output array field
@@ -103,37 +103,48 @@ router.post("/like", async (req, res) => {
   try {
     const { userId, postId } = req.body;
 
-    const post = await Post.findById(postId);
-    if (!post) return res.status(404).json({ message: "Post not found" });
+    // Validate request body
+    if (!userId || !postId) {
+      return res.status(400).json({ message: "userId and postId are required" });
+    }
 
+    // Find the post
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    // Check if the user has already liked the post
     const hasLiked = post.likes.includes(userId);
 
     if (hasLiked) {
       // Unlike the post
       post.likes = post.likes.filter((id) => id.toString() !== userId);
-      post.likeCount = post.likes.length; // Update likeCount
     } else {
       // Like the post
       post.likes.push(userId);
-      post.likeCount = post.likes.length;
 
-      if(post.user.toString() !== userId){
-        await createNotification(post.user, userId, "like", postId);
+      // Create a notification if the post owner is not the same as the user
+      if (post.user.toString() !== userId) {
+        await createNotification(post.user, userId, "like", postId, req.app.get("onlineUsers"));
       }
     }
 
-    await post.save(); // Save changes to DB
+    // Update the like count
+    post.likeCount = post.likes.length;
 
+    // Save the updated post
+    await post.save();
+
+    // Return the response
     return res.json({
       message: hasLiked ? "Post unliked" : "Post liked",
-      liked: !hasLiked,
-      likeCount: post.likeCount, // Send updated like count
+      liked: !hasLiked, // Indicates whether the post is now liked or unliked
+      likeCount: post.likeCount, // Updated like count
     });
   } catch (error) {
     console.error("Error in like route:", error);
-    res
-      .status(500)
-      .json({ message: "Error liking post", error: error.message });
+    res.status(500).json({ message: "Error liking post", error: error.message });
   }
 });
 
@@ -394,4 +405,5 @@ router.delete(
     }
   }
 );
+
 module.exports = router;
