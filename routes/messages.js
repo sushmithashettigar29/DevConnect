@@ -53,7 +53,7 @@ module.exports = (io) => {
   );
 
   // Get messages between two users
-  router.get("/chat/:user1/:user2", async (req, res) => {
+  router.get("/:user1/:user2", async (req, res) => {
     try {
       const { user1, user2 } = req.params;
 

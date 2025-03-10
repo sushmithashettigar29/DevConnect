@@ -12,15 +12,18 @@ import {
   ClickAwayListener,
 } from "@mui/material";
 import NotificationsIcon from "@mui/icons-material/Notifications";
+import ChatIcon from "@mui/icons-material/Chat";
 import { useState, useEffect } from "react";
 import NotificationDropdown from "./NotificationDropdown";
 import { getNotifications } from "../services/notificationService";
+import axios from "axios";
 
 const Navbar = ({ setAuth }) => {
   const navigate = useNavigate();
   const userId = localStorage.getItem("userId");
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [anchorEl, setAnchorEl] = useState(null);
 
   useEffect(() => {
@@ -34,7 +37,19 @@ const Navbar = ({ setAuth }) => {
       }
     };
     fetchNotifications();
-  }, []);
+
+    const fetchUnreadMessageCount = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:5000/api/messages/unread/${userId}`
+        );
+        setUnreadMessageCount(res.data.unreadMessages);
+      } catch (error) {
+        console.error("Error fetching unread message count : ", error);
+      }
+    };
+    fetchUnreadMessageCount();
+  }, [userId]);
 
   const handleMarkAsRead = () => {
     setUnreadCount(0);
@@ -81,6 +96,12 @@ const Navbar = ({ setAuth }) => {
           </Button>
         </Box>
 
+        <IconButton color="inherit" onClick={() => navigate("/chat")}>
+          <Badge badgeContent={unreadMessageCount} color="error">
+            <ChatIcon />
+          </Badge>
+        </IconButton>
+
         <IconButton color="inherit" onClick={handleNotificationClick}>
           <Badge badgeContent={unreadCount} color="error">
             <NotificationsIcon />
@@ -109,6 +130,5 @@ const Navbar = ({ setAuth }) => {
     </AppBar>
   );
 };
-
 
 export default Navbar;

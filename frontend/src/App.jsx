@@ -15,6 +15,7 @@ import EditProfile from "./pages/EditProfile";
 import CreatePost from "./components/CreatePost";
 import ShareResource from "./components/ShareResource";
 import { io } from "socket.io-client";
+import ChatPage from "./pages/ChatPage";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
@@ -99,6 +100,10 @@ function App() {
           element={
             isAuthenticated ? <ShareResource /> : <Navigate to="/login" />
           }
+        />
+        <Route
+          path="/chat"
+          element={isAuthenticated ? <ChatPage /> : <Navigate to="/login" />}
         />
       </Routes>
     </Router>
