@@ -85,7 +85,7 @@ module.exports = (io) => {
         .sort({ createdAt: -1 })
         .populate("sender", "name")
         .populate("receiver", "name");
-
+  
       const conversations = {};
       messages.forEach((msg) => {
         const chatPartner =
@@ -98,7 +98,7 @@ module.exports = (io) => {
           };
         }
       });
-
+  
       res.json(Object.values(conversations));
     } catch (error) {
       res.status(500).json({
