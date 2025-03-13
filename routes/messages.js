@@ -7,25 +7,31 @@ module.exports = (io) => {
 
   // Send message
   router.post("/send", authenticate, async (req, res) => {
+    console.log("Send endpoint hit");
     try {
-      const { senderId, receiverId, content } = req.body;
 
+      const { sender, receiver, content } = req.body;
+      console.log("Request payload:", req.body);
       if (!content) {
         return res.status(400).json({ message: "Message cannot be empty" });
       }
+  
+      // Save the message to the database
       const message = await Message.create({
-        sender: senderId,
-        receiver: receiverId,
+        sender,
+        receiver,
         content,
       });
-
-      res
-        .status(201)
-        .json({ message: "Message sent successfully", data: message });
+      await message.save();
+      console.log("Message saved to DB:", message); // Debugging
+  
+      // Emit the message to the receiver
+      io.to(receiver).emit("receive-message", message);
+  
+      res.status(201).json({ message: "Message sent successfully", data: message });
     } catch (error) {
-      res
-        .status(500)
-        .json({ message: "Error sending message", error: error.message });
+      console.error("Error saving message to DB:", error); // Debugging
+      res.status(500).json({ message: "Error sending message", error: error.message });
     }
   });
 
@@ -53,10 +59,9 @@ module.exports = (io) => {
   );
 
   // Get messages between two users
-  router.get("/:user1/:user2", async (req, res) => {
+  router.get("/:user1/:user2", authenticate, async (req, res) => {
     try {
       const { user1, user2 } = req.params;
-
       const messages = await Message.find({
         $or: [
           { sender: user1, receiver: user2 },
@@ -85,7 +90,7 @@ module.exports = (io) => {
         .sort({ createdAt: -1 })
         .populate("sender", "name")
         .populate("receiver", "name");
-  
+
       const conversations = {};
       messages.forEach((msg) => {
         const chatPartner =
@@ -98,7 +103,7 @@ module.exports = (io) => {
           };
         }
       });
-  
+
       res.json(Object.values(conversations));
     } catch (error) {
       res.status(500).json({

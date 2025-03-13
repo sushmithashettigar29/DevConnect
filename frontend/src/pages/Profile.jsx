@@ -275,16 +275,16 @@ const Profile = () => {
             </Button>
           )}
 
-          {currentUserId !== id && (
-            <Button
-              variant="contained"
-              color="primary"
-              sx={{ marginTop: 2 }}
-              onClick={() => alert("Message functionality will be added later")}
-            >
-              Message
-            </Button>
-          )}
+{currentUserId !== id && (
+        <Button
+          variant="contained"
+          color="primary"
+          sx={{ marginTop: 2 }}
+          onClick={() => navigate(`/chat/${id}`)} // ✅ Navigate to chat window
+        >
+          Message
+        </Button>
+      )}
 
           {currentUserId === id && (
             <Stack direction="column" spacing={2} sx={{ marginTop: 2 }}>
