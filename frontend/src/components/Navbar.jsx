@@ -39,13 +39,26 @@ const Navbar = ({ setAuth }) => {
     fetchNotifications();
 
     const fetchUnreadMessageCount = async () => {
+      console.log("User ID from navbar:", userId); // Check if userId is valid
+
+      if (!userId || typeof userId !== "string" || userId.length !== 24) {
+        console.error("Invalid userId:", userId);
+        return;
+      }
       try {
         const res = await axios.get(
           `http://localhost:5000/api/messages/unread/${userId}`
         );
-        setUnreadMessageCount(res.data.unreadMessages);
+        if (res.data && typeof res.data.unreadMessages === "number") {
+          setUnreadMessageCount(res.data.unreadMessages);
+        } else {
+          console.error("Invalid response structure:", res.data);
+        }
       } catch (error) {
-        console.error("Error fetching unread message count : ", error);
+        console.error(
+          "Error fetching unread message count:",
+          error.response?.data || error.message
+        );
       }
     };
     fetchUnreadMessageCount();

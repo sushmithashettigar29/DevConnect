@@ -5,66 +5,75 @@ function Chat({ messages, onSendMessage, userId }) {
   const [inputMessage, setInputMessage] = useState("");
   const messageEndRef = useRef(null);
 
-  const scrollToBottom = () => {
-    messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
+  // Auto-scroll to the bottom when messages are updated
   useEffect(() => {
-    scrollToBottom();
+    messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Handle sending a message
   const handleSendMessage = () => {
+    console.log("Send button clicked"); // Debugging: Log when the button is clicked
     if (inputMessage.trim()) {
-      console.log("Sending message:", inputMessage); // Debugging
+      console.log("Sending message:", inputMessage); // Debugging: Log the message being sent
       onSendMessage(inputMessage);
       setInputMessage("");
     }
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <Box
-        sx={{
-          flex: 1,
-          overflowY: "auto",
-          padding: "10px",
-          borderBottom: "1px solid #ccc",
-        }}
-      >
-        {messages.map((message, index) => (
+    <Box
+      sx={{
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        height: "100vh",
+      }}
+    >
+      {/* Display messages */}
+      <Box sx={{ flex: 1, overflowY: "auto", padding: "10px" }}>
+        {messages.map((message) => (
           <Box
-            key={index}
+            key={message._id}
             sx={{
-              marginBottom: "10px",
               textAlign: message.sender === userId ? "right" : "left",
+              marginBottom: "8px",
             }}
           >
-            <Box
+            <Typography
+              variant="body1"
               sx={{
+                background: message.sender === userId ? "blue" : "gray",
+                color: "white",
+                padding: "8px",
+                borderRadius: "8px",
                 display: "inline-block",
-                padding: "8px 12px",
-                borderRadius: "10px",
-                backgroundColor:
-                  message.sender === userId ? "primary.main" : "grey.300",
-                color: message.sender === userId ? "white" : "black",
+                maxWidth: "60%",
               }}
             >
-              <Typography variant="body1">{message.content}</Typography>
-            </Box>
+              {message.content}
+            </Typography>
           </Box>
         ))}
         <div ref={messageEndRef} />
       </Box>
 
-      <Box sx={{ padding: "10px", display: "flex", gap: "10px" }}>
+      {/* Input field and send button */}
+      <Box
+        sx={{
+          padding: "10px",
+          display: "flex",
+          gap: "10px",
+          borderTop: "1px solid #ddd",
+        }}
+      >
         <TextField
           fullWidth
+          variant="outlined"
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
-          onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
           placeholder="Type a message..."
         />
-        <Button variant="contained" color="primary" onClick={handleSendMessage}>
+        <Button variant="contained" onClick={handleSendMessage}>
           Send
         </Button>
       </Box>

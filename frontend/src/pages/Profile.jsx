@@ -185,6 +185,14 @@ const Profile = () => {
     }
   };
 
+  const handleMessageButtonClick = () => {
+    if (!isFollowing) {
+      alert("You must follow this user first to send a message.");
+    } else {
+      navigate(`/chat`); // Navigate to the chat window
+    }
+  };
+
   if (loading) return <CircularProgress />;
 
   return (
@@ -275,16 +283,17 @@ const Profile = () => {
             </Button>
           )}
 
-{currentUserId !== id && (
-        <Button
-          variant="contained"
-          color="primary"
-          sx={{ marginTop: 2 }}
-          onClick={() => navigate(`/chat/${id}`)} // ✅ Navigate to chat window
-        >
-          Message
-        </Button>
-      )}
+          {currentUserId !== id && (
+            <Button
+              variant="contained"
+              color="primary"
+              sx={{ marginTop: 2 }}
+              onClick={handleMessageButtonClick}
+              disabled={!isFollowing} // Disable the button if not following
+            >
+              Message
+            </Button>
+          )}
 
           {currentUserId === id && (
             <Stack direction="column" spacing={2} sx={{ marginTop: 2 }}>

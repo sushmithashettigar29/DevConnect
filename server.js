@@ -53,27 +53,21 @@ app.get("/", (req, res) => {
 });
 
 io.on("connection", (socket) => {
-  console.log("User connected : ", socket.id);
+  console.log("User connected:", socket.id);
 
   socket.on("user-online", (userId) => {
     onlineUsers.set(userId, socket.id);
     console.log(`User ${userId} is online`);
   });
 
-  socket.on("send-message", async ({ sender, receiver, text }) => {
+  socket.on("send-message", async ({ sender, receiver, content }) => {
     try {
-      const message = new Message({ sender, receiver, text, isRead: false });
+      const message = new Message({ sender, receiver, content, isRead: false });
       await message.save();
 
-      const unreadCount = await Message.countDocuments({
-        receiver,
-        isRead: false,
-      });
       const receiverSocketId = onlineUsers.get(receiver);
-
       if (receiverSocketId) {
         io.to(receiverSocketId).emit("receive-message", message);
-        io.to(receiverSocketId).emit("update-unread-count", { unreadCount });
       }
 
       io.to(socket.id).emit("message-sent", { success: true, message });

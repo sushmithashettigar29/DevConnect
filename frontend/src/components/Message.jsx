@@ -1,122 +1,69 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import io from "socket.io-client";
-import ConversationList from "./ConversationList";
-import Chat from "./Chat";
-import {
-  Box,
-  Typography,
-  List,
-  ListItem,
-  ListItemAvatar,
-  Avatar,
-  ListItemText,
-} from "@mui/material";
+import ConversationList from "../components/ConversationList";
+import Chat from "../components/Chat";
+import { Box, Typography } from "@mui/material";
 
 const socket = io("http://localhost:5000");
 
 function Message() {
-  const [userId, setUserId] = useState(localStorage.getItem("userId"));
+  const userId = localStorage.getItem("userId");
   const [receiverId, setReceiverId] = useState(null);
-  const [conversations, setConversations] = useState([]);
   const [messages, setMessages] = useState([]);
-  const [followingUsers, setFollowingUsers] = useState([]);
 
-  // Fetch conversations for the logged-in user
-  useEffect(() => {
-    const fetchConversations = async () => {
-      try {
-        const response = await axios.get(
-          `http://localhost:5000/api/messages/conversations/${userId}`
-        );
-        setConversations(response.data);
-      } catch (error) {
-        console.error("Error fetching conversations:", error);
-      }
-    };
-
-    if (userId) {
-      fetchConversations();
-    }
-  }, [userId]);
-
-  // Fetch messages between two users
+  // Fetch messages when receiverId changes
   useEffect(() => {
     if (receiverId) {
-      const fetchMessages = async () => {
-        try {
-          const response = await axios.get(
-            `http://localhost:5000/api/messages/${userId}/${receiverId}`
-          );
-          setMessages(response.data);
-        } catch (error) {
-          console.error("Error fetching messages:", error);
-        }
-      };
-
-      fetchMessages();
+      axios
+        .get(`http://localhost:5000/api/messages/${userId}/${receiverId}`)
+        .then((res) => {
+          console.log("Fetched messages:", res.data); // Debugging: Log fetched messages
+          setMessages(res.data);
+        })
+        .catch((err) => console.error(err));
     } else {
-      // Reset messages when no receiver is selected
       setMessages([]);
     }
-  }, [userId, receiverId]);
+  }, [receiverId, userId]);
 
-  // Listen for real-time messages
+  // Listen for incoming messages
   useEffect(() => {
-    socket.on("receive-message", (newMessage) => {
+    const handleReceiveMessage = (newMessage) => {
+      console.log("Received message via socket:", newMessage); // Debugging: Log received message
+      // Only add the message if it belongs to the current conversation
       if (
         newMessage.sender === receiverId ||
         newMessage.receiver === receiverId
       ) {
-        setMessages((prevMessages) => [...prevMessages, newMessage]);
+        setMessages((prev) => [...prev, newMessage]);
       }
-    });
+    };
 
+    socket.on("receive-message", handleReceiveMessage);
+
+    // Clean up the socket listener
     return () => {
-      socket.off("receive-message");
+      socket.off("receive-message", handleReceiveMessage);
     };
-  }, [receiverId]);
+  }, [receiverId]); // Add receiverId as a dependency
 
-  // Fetch following users
-  useEffect(() => {
-    const fetchFollowingUsers = async () => {
-      try {
-        const response = await axios.get(
-          `http://localhost:5000/api/users/following/${userId}`
-        );
-        setFollowingUsers(response.data);
-      } catch (error) {
-        console.error("Error fetching following users:", error);
-      }
-    };
-
-    if (userId) {
-      fetchFollowingUsers();
-    }
-  }, [userId]);
-
-  // Handle sending a message
+  // Send a message
   const sendMessage = async (content) => {
-    if (!content.trim()) return;
-  
+    if (!receiverId) return;
+
+    const newMessage = { sender: userId, receiver: receiverId, content };
+
     try {
-      const newMessage = {
-        sender: userId,
-        receiver: receiverId,
-        content,
-      };
-  
-      console.log("Sending message:", newMessage); // Debugging
-  
-      // Emit the message to the server
+      console.log("Sending message:", newMessage); // Debugging: Log sent message
+      // Send the message to the backend
+      await axios.post("http://localhost:5000/api/messages/send", newMessage);
+
+      // Emit the message via socket
       socket.emit("send-message", newMessage);
-  
+
       // Add the message to the local state
-      setMessages((prevMessages) => [...prevMessages, newMessage]);
-  
-      // Send the message to the backend API
-      const response = await axios.post("http://localhost:5000/api/messages/send", newMessage);
-      console.log("Backend response:", response.data); // Debugging
+      setMessages((prev) => [...prev, newMessage]);
     } catch (error) {
       console.error("Error sending message:", error);
     }
@@ -124,66 +71,21 @@ function Message() {
 
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
-      <Box
-        sx={{ width: "30%", borderRight: "1px solid #ccc", overflow: "auto" }}
-      >
-        <ConversationList
-          conversations={conversations}
-          onSelectConversation={(receiverId) => setReceiverId(receiverId)}
-        />
-
-        <Typography
-          variant="h6"
-          sx={{ padding: "10px", borderBottom: "1px solid #ccc" }}
+      <ConversationList onSelectConversation={setReceiverId} />
+      {receiverId ? (
+        <Chat messages={messages} onSendMessage={sendMessage} userId={userId} />
+      ) : (
+        <Box
+          sx={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
         >
-          Following
-        </Typography>
-        <List>
-          {followingUsers.map((user) => (
-            <ListItem
-              button
-              key={user._id}
-              onClick={() => setReceiverId(user._id)}
-              sx={{
-                "&:hover": { backgroundColor: "#f5f5f5" },
-              }}
-            >
-              <ListItemAvatar>
-              <Avatar
-            src={
-              user?.profilePicture
-                ? `http://localhost:5000${user.profilePicture}`
-                : ""
-            }
-            alt={user?.name}
-            sx={{ width: 50, height: 50 }}
-          />
-              </ListItemAvatar>
-              <ListItemText primary={user.name} />
-            </ListItem>
-          ))}
-        </List>
-      </Box>
-
-      <Box sx={{ width: "70%" }}>
-        {receiverId ? (
-          <Chat messages={messages} onSendMessage={sendMessage} />
-        ) : (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              height: "100%",
-              textAlign: "center",
-            }}
-          >
-            <Typography variant="h6" color="textSecondary">
-              Select a conversation to start chatting
-            </Typography>
-          </Box>
-        )}
-      </Box>
+          <Typography>Select a chat to start messaging</Typography>
+        </Box>
+      )}
     </Box>
   );
 }
