@@ -16,11 +16,7 @@ router.get("/:senderId/:receiverId", getMessages);
 // Get all conversations for a user
 router.get("/conversations/:userId", getConversations);
 
-
-
 // Fetch unread messages count
 router.get("/unread/:userId", getUnreadMessages);
-
-
 
 module.exports = router;
