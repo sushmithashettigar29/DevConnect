@@ -12,13 +12,21 @@ function Message() {
   const [receiverId, setReceiverId] = useState(null);
   const [messages, setMessages] = useState([]);
 
-  // Fetch messages when receiverId changes
   useEffect(() => {
     if (receiverId) {
+      const token = localStorage.getItem("token");
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
+
       axios
-        .get(`http://localhost:5000/api/messages/${userId}/${receiverId}`)
+        .get(
+          `http://localhost:5000/api/messages/${userId}/${receiverId}`,
+          config
+        )
         .then((res) => {
-          console.log("Fetched messages:", res.data); // Debugging: Log fetched messages
           setMessages(res.data);
         })
         .catch((err) => console.error(err));
@@ -27,11 +35,8 @@ function Message() {
     }
   }, [receiverId, userId]);
 
-  // Listen for incoming messages
   useEffect(() => {
     const handleReceiveMessage = (newMessage) => {
-      console.log("Received message via socket:", newMessage); // Debugging: Log received message
-      // Only add the message if it belongs to the current conversation
       if (
         newMessage.sender === receiverId ||
         newMessage.receiver === receiverId
@@ -39,30 +44,27 @@ function Message() {
         setMessages((prev) => [...prev, newMessage]);
       }
     };
-
     socket.on("receive-message", handleReceiveMessage);
-
-    // Clean up the socket listener
     return () => {
       socket.off("receive-message", handleReceiveMessage);
     };
-  }, [receiverId]); // Add receiverId as a dependency
+  }, [receiverId]);
 
-  // Send a message
   const sendMessage = async (content) => {
     if (!receiverId) return;
-
     const newMessage = { sender: userId, receiver: receiverId, content };
-
     try {
-      console.log("Sending message:", newMessage); // Debugging: Log sent message
-      // Send the message to the backend
-      await axios.post("http://localhost:5000/api/messages/send", newMessage);
-
-      // Emit the message via socket
-      socket.emit("send-message", newMessage);
-
-      // Add the message to the local state
+      const token = localStorage.getItem("token");
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
+      await axios.post(
+        "http://localhost:5000/api/messages/send",
+        newMessage,
+        config
+      );
       setMessages((prev) => [...prev, newMessage]);
     } catch (error) {
       console.error("Error sending message:", error);

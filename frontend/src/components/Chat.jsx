@@ -5,16 +5,12 @@ function Chat({ messages, onSendMessage, userId }) {
   const [inputMessage, setInputMessage] = useState("");
   const messageEndRef = useRef(null);
 
-  // Auto-scroll to the bottom when messages are updated
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Handle sending a message
   const handleSendMessage = () => {
-    console.log("Send button clicked"); // Debugging: Log when the button is clicked
     if (inputMessage.trim()) {
-      console.log("Sending message:", inputMessage); // Debugging: Log the message being sent
       onSendMessage(inputMessage);
       setInputMessage("");
     }
@@ -29,7 +25,6 @@ function Chat({ messages, onSendMessage, userId }) {
         height: "100vh",
       }}
     >
-      {/* Display messages */}
       <Box sx={{ flex: 1, overflowY: "auto", padding: "10px" }}>
         {messages.map((message) => (
           <Box
@@ -57,7 +52,6 @@ function Chat({ messages, onSendMessage, userId }) {
         <div ref={messageEndRef} />
       </Box>
 
-      {/* Input field and send button */}
       <Box
         sx={{
           padding: "10px",

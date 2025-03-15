@@ -39,8 +39,6 @@ const Navbar = ({ setAuth }) => {
     fetchNotifications();
 
     const fetchUnreadMessageCount = async () => {
-      console.log("User ID from navbar:", userId); // Check if userId is valid
-
       if (!userId || typeof userId !== "string" || userId.length !== 24) {
         console.error("Invalid userId:", userId);
         return;

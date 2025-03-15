@@ -30,6 +30,7 @@ const Profile = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState("");
   const [userList, setUserList] = useState([]);
+  const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
     if (!id) {
@@ -58,6 +59,20 @@ const Profile = () => {
 
     fetchUser();
   }, [id, navigate, currentUserId]);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/users/${id}`);
+        const data = await res.json();
+        setUserProfile(data);
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+      }
+    };
+  
+    fetchProfile();
+  }, [id]);
 
   const handleFollow = async () => {
     if (!currentUserId) {
@@ -188,9 +203,13 @@ const Profile = () => {
   const handleMessageButtonClick = () => {
     if (!isFollowing) {
       alert("You must follow this user first to send a message.");
-    } else {
-      navigate(`/chat`); // Navigate to the chat window
+      return;
     }
+    if (!currentUserId || !user?._id) {
+      alert("Error fetching user details. Try again.");
+      return;
+    }
+    navigate(`/chat/${user._id}`);
   };
 
   if (loading) return <CircularProgress />;
@@ -289,7 +308,7 @@ const Profile = () => {
               color="primary"
               sx={{ marginTop: 2 }}
               onClick={handleMessageButtonClick}
-              disabled={!isFollowing} // Disable the button if not following
+              disabled={!isFollowing}
             >
               Message
             </Button>

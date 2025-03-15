@@ -14,13 +14,10 @@ function ConversationList({ onSelectConversation }) {
 
   useEffect(() => {
     const fetchFollowingUsers = async () => {
-      console.log("Fetching followed users...");
       try {
-        // Fetch the list of users the current user is following
         const res = await axios.get(
           `http://localhost:5000/api/users/following/${userId}`
         );
-        console.log("Fetched followed users:", res.data); // Debugging
         setFollowingUsers(res.data);
       } catch (error) {
         console.error("Error fetching followed users:", error);
