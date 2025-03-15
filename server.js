@@ -24,7 +24,7 @@ let onlineUsers = new Map();
 
 app.set("io", io);
 app.set("onlineUsers", onlineUsers);
-
+app.locals.onlineUsers = onlineUsers;
 app.use(express.json());
 app.use(
   cors({

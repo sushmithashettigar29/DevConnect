@@ -6,7 +6,6 @@ import {
   ListItem,
   ListItemText,
   IconButton,
-  Badge,
 } from "@mui/material";
 import { markNotificationsAsRead } from "../services/notificationService";
 
@@ -19,9 +18,13 @@ const NotificationDropdown = ({ notifications, onMarkAsRead }) => {
   }, [notifications]);
 
   const handleMarkAsRead = async () => {
-    await markNotificationsAsRead();
-    onMarkAsRead();
-    setUnreadCount(0);
+    try {
+      await markNotificationsAsRead();
+      onMarkAsRead(); // Update the parent component
+      setUnreadCount(0);
+    } catch (error) {
+      console.error("Error marking notifications as read:", error);
+    }
   };
 
   return (
@@ -44,7 +47,7 @@ const NotificationDropdown = ({ notifications, onMarkAsRead }) => {
           <ListItem key={notification._id}>
             <ListItemText
               primary={notification.type}
-              secondary={notification.sender.name}
+              secondary={notification.sender?.name || "Unknown User"}
             />
           </ListItem>
         ))}

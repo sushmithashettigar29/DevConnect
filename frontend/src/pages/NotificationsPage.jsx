@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { Box, Typography, List, ListItem, ListItemText } from "@mui/material";
+import {
+  Box,
+  Typography,
+  List,
+  ListItem,
+  ListItemText,
+  Button,
+} from "@mui/material";
 import {
   getNotifications,
   markNotificationsAsRead,
@@ -10,16 +17,24 @@ const NotificationsPage = () => {
 
   useEffect(() => {
     const fetchNotifications = async () => {
-      const data = await getNotifications();
-      setNotifications(data);
+      try {
+        const data = await getNotifications();
+        setNotifications(data);
+      } catch (error) {
+        console.error("Error fetching notifications:", error);
+      }
     };
     fetchNotifications();
   }, []);
 
   const handleMarkAsRead = async () => {
-    await markNotificationsAsRead();
-    const data = await getNotifications();
-    setNotifications(data);
+    try {
+      await markNotificationsAsRead();
+      const data = await getNotifications();
+      setNotifications(data);
+    } catch (error) {
+      console.error("Error marking notifications as read:", error);
+    }
   };
 
   return (
@@ -28,16 +43,18 @@ const NotificationsPage = () => {
         Notifications
       </Typography>
       <List>
-        {notifications.map((notifications) => (
-          <ListItem key={notifications._id}>
+        {notifications.map((notification) => (
+          <ListItem key={notification._id}>
             <ListItemText
-              primary={notifications.type}
-              secondary={notifications.sender.name}
+              primary={notification.type}
+              secondary={notification.sender?.name || "Unknown User"}
             />
           </ListItem>
         ))}
       </List>
-      <button onClick={handleMarkAsRead}>Mark All as Read</button>
+      <Button variant="contained" onClick={handleMarkAsRead}>
+        Mark All as Read
+      </Button>
     </Box>
   );
 };

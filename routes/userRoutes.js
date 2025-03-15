@@ -1,7 +1,7 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
-const Notification = require("../models/Notification");
+const createNotification = require("../utils/notificationHelper");
 
 const router = express.Router();
 
@@ -29,9 +29,6 @@ router.post("/follow/:id", authenticate, async (req, res) => {
     const { id } = req.params;
     const userId = req.userId;
 
-    console.log("🔹 Follow Request Received");
-    console.log("🔹 Target User ID:", id);
-    console.log("🔹 Authenticated User ID:", userId);
     if (!id || !userId) {
       return res
         .status(400)
@@ -58,6 +55,18 @@ router.post("/follow/:id", authenticate, async (req, res) => {
 
     await currentUser.save();
     await userToFollow.save();
+
+    // Access onlineUsers from app.locals
+    const onlineUsers = req.app.locals.onlineUsers;
+
+    // Create a notification for the user being followed
+    await createNotification(
+      id, // Receiver of the notification (user being followed)
+      userId, // Sender of the notification (user who is following)
+      "follow", // Notification type
+      null, // No post associated with follow
+      onlineUsers // Pass the onlineUsers map
+    );
 
     return res.json({ success: true, message: "User followed successfully." });
   } catch (error) {
