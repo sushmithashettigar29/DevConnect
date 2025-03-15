@@ -8,7 +8,6 @@ import {
   IconButton,
   Badge,
 } from "@mui/material";
-import NotificationsIcon from "@mui/icons-material/Notifications";
 import { markNotificationsAsRead } from "../services/notificationService";
 
 const NotificationDropdown = ({ notifications, onMarkAsRead }) => {

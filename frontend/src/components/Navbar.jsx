@@ -18,13 +18,18 @@ import NotificationDropdown from "./NotificationDropdown";
 import { getNotifications } from "../services/notificationService";
 import axios from "axios";
 
-const Navbar = ({ setAuth }) => {
+const Navbar = ({ setAuth, receiverId }) => {
   const navigate = useNavigate();
   const userId = localStorage.getItem("userId");
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [anchorEl, setAnchorEl] = useState(null);
+
+  // Function to validate MongoDB ObjectId
+  const isValidObjectId = (id) => {
+    return /^[0-9a-fA-F]{24}$/.test(id);
+  };
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -39,14 +44,24 @@ const Navbar = ({ setAuth }) => {
     fetchNotifications();
 
     const fetchUnreadMessageCount = async () => {
-      if (!userId || typeof userId !== "string" || userId.length !== 24) {
-        console.error("Invalid userId:", userId);
+      if (!receiverId || !isValidObjectId(receiverId)) {
+        console.error("Invalid receiverId:", receiverId);
         return;
       }
+
       try {
+        const token = localStorage.getItem("token"); // Retrieve the token from localStorage
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`, // Include the token in the headers
+          },
+        };
+
         const res = await axios.get(
-          `http://localhost:5000/api/messages/unread/${userId}`
+          `http://localhost:5000/api/messages/unread/${receiverId}`,
+          config // Pass the config with headers
         );
+
         if (res.data && typeof res.data.unreadMessages === "number") {
           setUnreadMessageCount(res.data.unreadMessages);
         } else {
@@ -59,8 +74,11 @@ const Navbar = ({ setAuth }) => {
         );
       }
     };
-    fetchUnreadMessageCount();
-  }, [userId]);
+
+    if (receiverId) {
+      fetchUnreadMessageCount();
+    }
+  }, [receiverId, userId]);
 
   const handleMarkAsRead = () => {
     setUnreadCount(0);

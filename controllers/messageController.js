@@ -85,13 +85,16 @@ exports.getConversations = async (req, res) => {
 
 exports.getUnreadMessages = async (req, res) => {
   try {
-    const { userId } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ error: "Invalid userId format" });
+    const { receiverId } = req.params; // Use receiverId instead of userId
+
+    // Validate the receiverId
+    if (!mongoose.Types.ObjectId.isValid(receiverId)) {
+      return res.status(400).json({ error: "Invalid receiverId format" });
     }
 
+    // Fetch unread messages for the receiver
     const unreadMessages = await Message.countDocuments({
-      receiver: userId,
+      receiver: receiverId,
       isRead: false,
     });
 
