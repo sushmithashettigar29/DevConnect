@@ -110,10 +110,6 @@ function Home() {
 
   const handleFollow = async (followerUserId) => {
     const token = localStorage.getItem("token");
-
-    console.log("🔹 Attempting to follow user:", followerUserId);
-    console.log("🔹 Token being sent:", token);
-
     if (!token) {
       console.error("🚨 No token found in localStorage!");
       return;
@@ -127,8 +123,6 @@ function Home() {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
-      console.log("✅ Follow success:", response.data);
       setFollowing((prev) => new Set([...Array.from(prev), followerUserId]));
     } catch (error) {
       console.error("🚨 Error following user:", error.response?.data || error);
@@ -350,8 +344,27 @@ function Home() {
   };
 
   return (
-    <Grid container spacing={2} justifyContent="center" sx={{ marginTop: 2 }}>
-      <div className="max-w-3xl max-auto mt-4 p-4">
+    <Grid
+      container
+      spacing={2}
+      justifyContent="center"
+      alignItems="center"
+      display="flex"
+      flexDirection="column"
+      sx={{ marginTop: 2, px: 2 }}
+    >
+      <Grid
+        item
+        sx={{
+          minWidth: "450px",
+          maxWidth: "750px",
+          width: "100%",
+          marginBottom: 3,
+        }}
+      >
+        <Typography variant="h5" fontWeight="bold" mb={3} sx={{ backgroundColor: "#543A14", p:2, textAlign:"center", color:"#F0BB78" }} >
+        HOME
+      </Typography>
         <TextField
           fullWidth
           variant="outlined"
@@ -361,27 +374,41 @@ function Home() {
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <FaSearch className="text-gray-500" />
+                <FaSearch className="text-gray-500 " />
               </InputAdornment>
             ),
             endAdornment: (
-              <InputAdornment position="end">
+              <InputAdornment position="end" className="flex items-center">
                 <IconButton
                   onClick={() =>
                     setSortOrder(sortOrder === "newest" ? "oldest" : "newest")
                   }
+                  className="p-2"
                 >
-                  <FaFilter className="text-gray-600" />
+                  <FaFilter className="text-gray-600 w-[20px] h-[20px]" />
                 </IconButton>
               </InputAdornment>
             ),
           }}
         />
-      </div>
+      </Grid>
       {posts.length > 0 ? (
         posts.map((post) => (
-          <Grid item xs={12} sm={6} key={post._id}>
-            <Card sx={{ marginBottom: 2, borderRadius: 2, overflow: "hidden" }}>
+          <Grid
+            item
+            key={post._id}
+            sx={{ minWidth: "450px", maxWidth: "750px", width: "100%" }}
+          >
+            <Card
+              sx={{
+                marginBottom: 2,
+                borderRadius: 1,
+                overflow: "hidden",
+                padding: 2,
+                backgroundColor: "#FFF0DC",
+                boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
+              }}
+            >
               <CardContent>
                 <Grid
                   container
@@ -415,8 +442,8 @@ function Home() {
                   {post.user._id !== userId ? (
                     following.has(post.user._id) ? (
                       <Button
-                        variant="contained"
-                        color="secondary"
+                        variant="contained" 
+                        sx={{backgroundColor:"#F0BB78"}}
                         onClick={() => handleUnfollow(post.user._id)}
                       >
                         Unfollow
@@ -424,7 +451,7 @@ function Home() {
                     ) : (
                       <Button
                         variant="contained"
-                        color="primary"
+                        sx={{backgroundColor:"#543A14"}}
                         onClick={() => handleFollow(post.user._id)}
                       >
                         Follow
@@ -541,7 +568,7 @@ function Home() {
                     <img
                       src={`http://localhost:5000${post.image}`}
                       alt="Post"
-                      style={{ width: "100%", marginTop: 10, borderRadius: 8 }}
+                      style={{ width: "100%", marginTop: 10, borderRadius: 2 }}
                       onError={(e) => e.target.remove()}
                     />
                   )}

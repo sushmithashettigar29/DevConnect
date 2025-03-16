@@ -31,8 +31,8 @@ function ConversationList({ onSelectConversation }) {
     <div
       style={{ width: "300px", borderRight: "1px solid #ddd", padding: "10px" }}
     >
-      <Typography variant="h6" sx={{ mb: 2 }}>
-        Chats
+      <Typography variant="h5" fontWeight="bold" sx={{ mb: 1,mt:1, backgroundColor:"#543A14", textAlign:"center",p:2, color:"#FFF0DC" }}>
+        Conversations
       </Typography>
       {followingUsers.length === 0 ? (
         <Typography>No followed users available</Typography>

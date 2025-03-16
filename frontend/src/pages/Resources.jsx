@@ -10,6 +10,7 @@ import {
   TextField,
   InputAdornment,
   IconButton,
+  Grid
 } from "@mui/material";
 import { Link } from "react-router-dom";
 import { FaSearch, FaFilter } from "react-icons/fa";
@@ -66,11 +67,37 @@ function Resources() {
   };
 
   return (
-    <Box p={4}>
-      <Typography variant="h4" fontWeight="bold" mb={3}>
-        Resources
+    <Grid
+    container
+    spacing={2}
+    justifyContent="center"
+    alignItems="center"
+    display="flex"
+    flexDirection="column"
+    sx={{ marginTop: 2, px: 2 }}
+  >
+    <Grid
+      item
+      sx={{
+        minWidth: "450px",
+        maxWidth: "750px",
+        width: "100%",
+        marginBottom: 3,
+      }}
+    >
+      <Typography
+        variant="h5"
+        fontWeight="bold"
+        mb={3}
+        sx={{
+          backgroundColor: "#543A14",
+          p: 2,
+          textAlign: "center",
+          color: "#F0BB78",
+        }}
+      >
+        RESOURCES
       </Typography>
-
       <TextField
         fullWidth
         variant="outlined"
@@ -102,41 +129,51 @@ function Resources() {
         <Typography>No resources available.</Typography>
       ) : (
         resources.map((resource) => (
-          <Card key={resource._id} sx={{ mb: 3, p: 2 }}>
+          <Card key={resource._id} sx={{ mb: 3, p: 2 ,backgroundColor: "#FFF0DC",}}>
             <CardContent>
-              <Typography variant="h6" fontWeight="bold">
-                {resource.title}
-              </Typography>
+              {/* Title and Download Button in the same line */}
+              <Grid container alignItems="center" justifyContent="space-between">
+                {/* Title on the left */}
+                <Grid item>
+                  <Typography variant="h6" fontWeight="bold">
+                    {resource.title}
+                  </Typography>
+                </Grid>
 
-              <Box mt={2}>
-                <Button
-                  variant="contained"
-                  color="success"
-                  href={`http://localhost:5000${resource.fileUrl}`}
-                  target="_blank"
-                  download={resource.fileUrl.split("/").pop()}
-                >
-                  Download
-                </Button>
-              </Box>
+                {/* Download Button on the right */}
+                <Grid item>
+                  <Button
+                    variant="contained"
+                    color="success" sx={{backgroundColor:"#543A14"}}
+                    href={`http://localhost:5000${resource.fileUrl}`}
+                    target="_blank"
+                    download={resource.fileUrl.split("/").pop()}
+                  >
+                    Download
+                  </Button>
+                </Grid>
+              </Grid>
 
+              {/* Delete Button (only for the owner) */}
               {currentUserId === resource.user._id && (
                 <Button
                   variant="contained"
                   color="error"
-                  sx={{ ml: 2 }}
+                  sx={{ mt: 2 }}
                   onClick={() => handleDeleteResource(resource._id)}
                 >
                   Delete
                 </Button>
               )}
 
-              <Box display="flex" gap={1} mt={1}>
+              {/* Categories */}
+              <Box display="flex" gap={1} mt={2}>
                 {resource.category.map((category, index) => (
-                  <Chip key={index} label={category} color="primary" />
+                  <Chip key={index} label={category} color="#FFF0DC" />
                 ))}
               </Box>
 
+              {/* Uploaded by */}
               <Typography variant="body2" mt={2}>
                 Uploaded by :{" "}
                 <Link
@@ -150,7 +187,8 @@ function Resources() {
           </Card>
         ))
       )}
-    </Box>
+    </Grid>
+  </Grid>
   );
 }
 

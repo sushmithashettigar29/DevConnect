@@ -10,6 +10,14 @@ import {
   Popper,
   Paper,
   ClickAwayListener,
+  Menu,
+  MenuItem,
+  Avatar,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
 } from "@mui/material";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import ChatIcon from "@mui/icons-material/Chat";
@@ -17,15 +25,19 @@ import { useState, useEffect } from "react";
 import NotificationDropdown from "./NotificationDropdown";
 import { getNotifications } from "../services/notificationService";
 import axios from "axios";
-
+import MenuIcon from "@mui/icons-material/Menu";
 const Navbar = ({ setAuth, receiverId }) => {
   const navigate = useNavigate();
   const userId = localStorage.getItem("userId");
+  const user = JSON.parse(localStorage.getItem("user")) || {};
+
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
-  const [anchorEl, setAnchorEl] = useState(null);
-
+  const [notificationAnchorEl, setNotificationAnchorEl] = useState(null);
+  const [profileAnchorEl, setProfileAnchorEl] = useState(null);
+  const [userProfile, setUserProfile] = useState({});
+  const [drawerOpen, setDrawerOpen] = useState(false);
   // Function to validate MongoDB ObjectId
   const isValidObjectId = (id) => {
     return /^[0-9a-fA-F]{24}$/.test(id);
@@ -50,16 +62,16 @@ const Navbar = ({ setAuth, receiverId }) => {
       }
 
       try {
-        const token = localStorage.getItem("token"); // Retrieve the token from localStorage
+        const token = localStorage.getItem("token");
         const config = {
           headers: {
-            Authorization: `Bearer ${token}`, // Include the token in the headers
+            Authorization: `Bearer ${token}`,
           },
         };
 
         const res = await axios.get(
           `http://localhost:5000/api/messages/unread/${receiverId}`,
-          config // Pass the config with headers
+          config
         );
 
         if (res.data && typeof res.data.unreadMessages === "number") {
@@ -78,6 +90,26 @@ const Navbar = ({ setAuth, receiverId }) => {
     if (receiverId) {
       fetchUnreadMessageCount();
     }
+
+    const fetchUserProfile = async () => {
+      try {
+        const userId = localStorage.getItem("userId");
+        if (!userId) {
+          console.error("User ID not found in localStorage");
+          return;
+        }
+
+        const response = await axios.get(
+          `http://localhost:5000/api/users/${userId}`
+        );
+        if (response.data && response.data.profilePicture) {
+          setUserProfile(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+      }
+    };
+    fetchUserProfile();
   }, [receiverId, userId]);
 
   const handleMarkAsRead = () => {
@@ -92,54 +124,76 @@ const Navbar = ({ setAuth, receiverId }) => {
   };
 
   const handleNotificationClick = (event) => {
-    setAnchorEl(anchorEl ? null : event.currentTarget);
+    setNotificationAnchorEl(notificationAnchorEl ? null : event.currentTarget);
   };
 
   const handleCloseDropdown = () => {
-    setAnchorEl(null);
+    setNotificationAnchorEl(null);
   };
 
   return (
-    <AppBar position="static" sx={{ backgroundColor: "#1976d2" }}>
+    <AppBar position="static" sx={{ backgroundColor: "#F0BB78" }}>
       <Toolbar>
+        <IconButton
+          edge="start"
+          color="inherit"
+          aria-label="menu"
+          sx={{ display: { xs: "block", md: "none" } }}
+          onClick={() => setDrawerOpen(true)}
+        >
+          <MenuIcon />
+        </IconButton>
+
         <Typography
-          variant="h6"
-          sx={{ flexGrow: 1, fontWeight: "bold", cursor: "pointer" }}
+          variant="h4"
+          sx={{ flexGrow: 1, fontWeight: "bold", cursor: "pointer", ml:2 }}
           onClick={() => navigate("/")}
         >
           DevConnect
         </Typography>
 
-        <Box sx={{ display: "flex", gap: 2 }}>
+        <Box sx={{ display: { xs: "none", md: "flex" }, gap: 3 }}>
           <Button color="inherit" onClick={() => navigate("/")}>
-            Home
+            <Typography
+              variant="h6"
+              sx={{ flexGrow: 1, fontWeight: "bold", cursor: "pointer" }}
+            >
+              Home
+            </Typography>
           </Button>
           <Button color="inherit" onClick={() => navigate("/resources")}>
-            Resources
-          </Button>
-          <Button
-            color="inherit"
-            onClick={() => navigate(`/profile/${userId}`)}
-          >
-            Profile
+          <Typography
+              variant="h6"
+              sx={{ flexGrow: 1, fontWeight: "bold", cursor: "pointer" }}
+            >
+              Resources
+            </Typography>
           </Button>
         </Box>
 
-        <IconButton color="inherit" onClick={() => navigate("/chat")}>
+        <IconButton
+          color="inherit"
+          sx={{ ml: 3, mr: 3 }}
+          onClick={() => navigate("/chat")}
+        >
           <Badge badgeContent={unreadMessageCount} color="error">
             <ChatIcon />
           </Badge>
         </IconButton>
 
-        <IconButton color="inherit" onClick={handleNotificationClick}>
+        <IconButton
+          color="inherit"
+          sx={{ mr: 3 }}
+          onClick={handleNotificationClick}
+        >
           <Badge badgeContent={unreadCount} color="error">
             <NotificationsIcon />
           </Badge>
         </IconButton>
 
         <Popper
-          open={Boolean(anchorEl)}
-          anchorEl={anchorEl}
+          open={Boolean(notificationAnchorEl)}
+          anchorEl={notificationAnchorEl}
           placement="bottom-end"
         >
           <ClickAwayListener onClickAway={handleCloseDropdown}>
@@ -151,11 +205,73 @@ const Navbar = ({ setAuth, receiverId }) => {
             </Paper>
           </ClickAwayListener>
         </Popper>
-
-        <Button color="error" onClick={handleLogout}>
-          Logout
-        </Button>
+        <div>
+          <IconButton
+            onClick={(e) => setProfileAnchorEl(e.currentTarget)}
+            color="inherit"
+          >
+            <Avatar
+              src={
+                userProfile?.profilePicture
+                  ? `http://localhost:5000${userProfile.profilePicture}`
+                  : ""
+              }
+              alt={userProfile?.name}
+            />
+          </IconButton>
+          <Menu
+            anchorEl={profileAnchorEl}
+            open={Boolean(profileAnchorEl)}
+            onClose={() => setProfileAnchorEl(null)}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+            transformOrigin={{ vertical: "top", horizontal: "right" }}
+          >
+            <MenuItem onClick={() => navigate(`/profile/${userId}`)}>
+              Profile
+            </MenuItem>
+            <MenuItem onClick={handleLogout}>Logout</MenuItem>
+          </Menu>
+        </div>
       </Toolbar>
+
+      <Drawer
+        anchor="left"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+      >
+        <List sx={{ width: 250 }}>
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => navigate("/")}>
+              {" "}
+              <ListItemText primary="Home" />{" "}
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => navigate("/resources")}>
+              {" "}
+              <ListItemText primary="Resources" />{" "}
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => navigate("/chat")}>
+              {" "}
+              <ListItemText primary="Chat" />{" "}
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => navigate(`/profile/${userId}`)}>
+              {" "}
+              <ListItemText primary="Profile" />{" "}
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton onClick={handleLogout}>
+              {" "}
+              <ListItemText primary="Logout" />{" "}
+            </ListItemButton>
+          </ListItem>
+        </List>
+      </Drawer>
     </AppBar>
   );
 };

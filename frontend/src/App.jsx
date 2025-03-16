@@ -17,6 +17,7 @@ import ShareResource from "./components/ShareResource";
 import { io } from "socket.io-client";
 import Message from "./components/Message";
 import ChatPage from "./components/ChatPage";
+import "./App.css";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
