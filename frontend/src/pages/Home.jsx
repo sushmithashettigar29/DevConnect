@@ -261,9 +261,10 @@ function Home() {
   const handleEditPost = (postId) => {
     try {
       const post = posts.find((p) => p._id === postId);
-      if (!post) ReadableStreamDefaultController;
+      if (!post) return;
       setEditedContent(post.content);
       setIsEditDialogOpen(true);
+      setNewImage(post.image);
       setSelectedPostIdForMenu(postId);
     } catch (error) {
       console.log("Error preparing to edit post", error);
